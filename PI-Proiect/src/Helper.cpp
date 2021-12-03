@@ -135,4 +135,27 @@ namespace pi {
 			}
 		}
 	}
+
+	Rectangle getBoundingBox(std::vector<cv::Point>& points) {
+		int x_min = points[0].x;
+		int x_max = x_min;
+		int y_min = points[0].y;
+		int y_max = y_min;
+
+		for (int i = 1; i < points.size(); i++) {
+			x_min = std::min(x_min, points[i].x);
+			x_max = std::max(x_max, points[i].x);
+			y_min = std::min(y_min, points[i].y);
+			y_max = std::max(y_max, points[i].y);
+		}
+
+		Rectangle rect;
+
+		rect.x = x_min;
+		rect.y = y_min;
+		rect.width = x_max - x_min;
+		rect.height = y_max - y_min;
+
+		return rect;
+	}
 }

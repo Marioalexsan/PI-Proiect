@@ -131,6 +131,17 @@ int main(int argc, char** argv) {
 
 		cv::imshow("Contours", drawing);
 
+		// Cut the license plate out
+
+		if (contours.size() > 0) {
+			auto rect = pi::getBoundingBox(contours[0]);
+
+			cv::Mat cut = cv::Mat(img, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
+
+			cv::imshow("License Plate", drawing);
+		}
+
+
 	}
 	catch (cv::Exception& e) {
 		std::cerr << "An OpenCV exception occurred! " << e.what();
