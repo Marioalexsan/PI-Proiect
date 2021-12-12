@@ -7,43 +7,90 @@
 
 
 int main(int argc, char** argv) {
+
+	// Utility Stuff
+
+	cv::Mat gauss3x3 = cv::Mat_<double>(
+		{
+			1, 2, 1,
+			2, 4, 2,
+			1, 2, 1
+		}
+	).reshape(0, 3) * (1.0 / 16.0);
+
+	cv::Mat gauss5x5 = cv::Mat_<double>(
+		{
+			2, 4, 5, 4, 2,
+			4, 9, 12, 9, 4,
+			5, 12, 15, 12, 5,
+			4, 9, 12, 9, 4,
+			2, 4, 5, 4, 2
+		}
+	).reshape(0, 5) * (1.0 / 159.0);
+
+	cv::Mat average3x3 = cv::Mat_<double>(
+		{
+			1, 1, 1,
+			1, 1, 1,
+			1, 1, 1
+		}
+	).reshape(0, 3) * (1.0 / 9.0);
+
+	cv::Mat sharpen3x3 = cv::Mat_<double>(
+		{
+			-1, -1, -1,
+			-1, 9, -1,
+			-1, -1, -1
+		}
+	).reshape(0, 3) * (1.0 / 9.0);
+
+
+
+	auto grayscaleStep = [](cv::Mat& input, cv::Mat& output)
+	{
+		cv::cvtColor(input, output, cv::COLOR_BGR2GRAY);
+		cv::imshow("Grayscale", output);
+	};
+
+	auto thresholdStep = [](cv::Mat& input, cv::Mat& output)
+	{
+		cv::threshold(input, output, 128, 255, cv::THRESH_OTSU);
+		cv::imshow("Threshold", output);
+	};
+
+	auto filterStep = [&](cv::Mat& input, cv::Mat& output)
+	{
+		cv::filter2D(input, output, -1, gauss3x3);
+		cv::imshow("Filter", output);
+	};
+
+	auto equalizeStep = [](cv::Mat& input, cv::Mat& output)
+	{
+		cv::equalizeHist(input, output);
+		cv::imshow("Equalize", output);
+	};
+
+	auto cannyStep = [](cv::Mat& input, cv::Mat& output)
+	{
+		cv::Canny(input, output, 100, 210, 3);
+		cv::imshow("Canny", output);
+	};
+
+	auto sharpenStep = [&](cv::Mat& input, cv::Mat& output)
+	{
+		cv::filter2D(input, output, -1, sharpen3x3);
+		cv::add(input, output, output);
+		cv::imshow("Sharpen", output);
+	};
+
+	// Actual processing
+
 	try {
-		cv::CommandLineParser parser(argc, argv, "{@fileinput || input image}");
-
-		cv::Mat img; // Imaginea originala
-		cv::Mat stage1; // Grayscale
-		cv::Mat stage2; // Noise reduction
-
-		cv::Mat stage2Kernel3x3 = cv::Mat_<double>(
-			{
-				1, 2, 1,
-				2, 4, 2,
-				1, 2, 1
-			}
-		).reshape(0, 3) * (1.0 / 16.0);
-
-		cv::Mat stage2Kernel5x5 = cv::Mat_<double>(
-			{
-				2, 4, 5, 4, 2,
-				4, 9, 12, 9, 4,
-				5, 12, 15, 12, 5,
-				4, 9, 12, 9, 4,
-				2, 4, 5, 4, 2
-			}
-		).reshape(0, 5) * (1.0 / 159.0);
-
-		cv::Mat kernel3x3smoother = cv::Mat_<double>(
-			{
-				1, 1, 1,
-				1, 1, 1,
-				1, 1, 1
-			}
-		).reshape(0, 3) * (1.0 / 9.0);
-
 
 		// Read image
 
 		std::string file;
+		cv::CommandLineParser parser(argc, argv, "{@fileinput || input image}");
 
 		if (parser.has("@fileinput")) {
 			file = parser.get<cv::String>(0);
@@ -53,9 +100,9 @@ int main(int argc, char** argv) {
 			std::getline(std::cin, file);
 		}
 
-		img = cv::imread(file);
+		cv::Mat original = cv::imread(file);
 
-		if (img.empty()) {
+		if (original.empty()) {
 			std::cerr << "Failed to open " << file << "!";
 			cv::waitKey();
 			return 0;
@@ -63,52 +110,45 @@ int main(int argc, char** argv) {
 
 		// Do processing
 
-		cv::cvtColor(img, stage1, cv::COLOR_BGR2GRAY);
+		pi::ImageProcess process;
 
-		cv::Mat hsv_img;
-		cv::cvtColor(img, hsv_img, cv::COLOR_BGR2HSV);
+		process.steps = {
+			grayscaleStep,
+			filterStep,
+			equalizeStep,
+			//thresholdStep,
+			cannyStep
+		};
 
-		// Apply filter
-
-		cv::filter2D(stage1, stage2, -1, stage2Kernel3x3);
-
-		// Increase contrast
-
-		pi::applyContrast(stage2, 80, 160, 50, 220);
-
-		cv::imshow("Contrast", stage2);
-
-		// Apply Canny algorithm to find edges
-
-		cv::Mat canny_output;
-		cv::Canny(stage2, canny_output, 100, 210, 3);
-
-		cv::imshow("Canny", canny_output);
+		cv::Mat result;
+		process.Run(original, result);
 
 		// Find contours using OpenCV
 
 		std::vector<std::vector<cv::Point>> contours;
 		std::vector<cv::Vec4i> hierarchy;
-		cv::findContours(canny_output, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+		cv::findContours(result, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
 		bool compress = true;
 		bool pruneShort = true;
 
-		// Compress contours to straight lines
+		// Simplify contours - multiple straight (or almost straight) lines become a single line
 
 		if (compress) {
-			pi::compressContours(contours);
+			pi::simplifyContours(contours);
 		}
 
-		// Prune contours that are too small
+		pi::pruneEmpty(contours);
+
+		// Prune contours that are way too small
 
 		if (pruneShort) {
-			pi::pruneShort(contours, 200);
+			pi::pruneShort(contours, 60);
 		}
 
 		// Draw resulting rectangles - these show the zones that can contain potential car plates
 
-		cv::Mat drawing = img.clone();
+		cv::Mat drawing = original.clone();
 		cv::RNG rng(12345);
 
 		for (size_t i = 0; i < contours.size(); i++)
@@ -133,15 +173,76 @@ int main(int argc, char** argv) {
 
 		// Cut the license plate out
 
-		if (contours.size() > 0) {
-			auto rect = pi::getBoundingBox(contours[0]);
+		cv::Mat plate;
 
-			cv::Mat cut = cv::Mat(img, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
+		for (int i = 0; i < contours.size(); i++) {
+			if (pi::isLikeARectangle(contours[i])) {
+				auto rect = pi::getBoundingBox(contours[i]);
 
-			cv::imshow("License Plate", drawing);
+				plate = cv::Mat(original, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
+
+				cv::imshow("License Plate", plate);
+
+				std::cout << "Color distance from white: " << pi::getColorMatch(plate, cv::Scalar::all(255));
+
+				break;
+			}
 		}
 
+		// Step 2 : read text
 
+		if (plate.empty()) {
+			cv::waitKey();
+			return 0;
+		}
+
+		pi::ImageProcess wordProcess;
+
+		wordProcess.steps = {
+			grayscaleStep,
+			//sharpenStep,
+			thresholdStep,
+			cannyStep
+		};
+
+		cv::Mat wordResult;
+		wordProcess.Run(plate, wordResult);
+
+		cv::findContours(wordResult, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+		compress = true;
+		pruneShort = true;
+
+		// Simplify contours - multiple straight (or almost straight) lines become a single line
+
+		if (compress) {
+			pi::simplifyContours(contours);
+		}
+
+		pi::pruneEmpty(contours);
+
+		// Prune contours that are way too small
+
+		if (pruneShort) {
+			pi::pruneShort(contours, 20);
+		}
+
+		std::vector<pi::ImageLetter> letters;
+
+		for (auto& contour : contours) {
+			pi::ImageLetter il;
+
+			auto rect = pi::getBoundingBox(contour);
+			auto letter = cv::Mat(plate, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
+			cv::resize(letter, letter, cv::Size(), 4.f, 4.f, 1);
+
+			cv::imshow(std::to_string(rand() % 1000) + " Letter", letter);
+
+			il.image = letter;
+			letters.push_back(il);
+		}
+
+		cv::imshow("Word result", wordResult);
 	}
 	catch (cv::Exception& e) {
 		std::cerr << "An OpenCV exception occurred! " << e.what();

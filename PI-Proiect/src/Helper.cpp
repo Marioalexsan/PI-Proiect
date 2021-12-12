@@ -33,7 +33,7 @@ namespace pi {
 		cv::Point c = points[2];
 		cv::Point d = points[3];
 
-		const double thresh = 0.2;
+		const double thresh = 0.12;
 
 		bool bad_angles =
 			abs(lineCos(a, b, c)) > thresh ||
@@ -42,6 +42,42 @@ namespace pi {
 			abs(lineCos(d, a, b)) > thresh;
 
 		return !bad_angles;
+	}
+
+	double getColorMatch(cv::Mat& img, cv::Scalar color) {
+		int baseb = (int)color[0];
+		int baseg = (int)color[1];
+		int baser = (int)color[2];
+
+		int baseluminosity = (baseb + baseg + baser) / 3;
+
+		if (img.type() != CV_8UC3) {
+			throw std::exception("Oh Shiet");
+		}
+
+		int matchingCount = 0;
+		int total = 0;
+		uint8_t* ptr = img.data;
+		for (int j = 0; j < img.rows; j++) {
+			for (int i = 0; i < img.cols; i++) {
+				int b = ptr[(img.cols * j + i) * img.channels()];
+				int g = ptr[(img.cols * j + i) * img.channels() + 1];
+				int r = ptr[(img.cols * j + i) * img.channels() + 2];
+
+				int luminosity = (b + g + r) / 3;
+
+
+				int distance = abs(baseluminosity - luminosity);
+				int threshold = 104;
+
+				if (distance <= threshold) {
+					matchingCount++;
+				}
+				total++;
+			}
+		}
+
+		return matchingCount / (double)total;
 	}
 
 	void pruneNonRectangles(std::vector<std::vector<cv::Point>>& target) {
@@ -65,6 +101,15 @@ namespace pi {
 		}
 	}
 
+	void pruneEmpty(std::vector<std::vector<cv::Point>>& target) {
+		for (int cindex = 0; cindex < target.size(); cindex++) {
+			if (target[cindex].size() < 2) {
+				target.erase(target.begin() + cindex);
+				cindex -= 1;
+			}
+		}
+	}
+
 	void pruneShort(std::vector<std::vector<cv::Point>>& target, double threshold) {
 		for (int cindex = 0; cindex < target.size(); cindex++) {
 			if (pi::contourPerimeter(target[cindex]) < threshold) {
@@ -74,10 +119,10 @@ namespace pi {
 		}
 	}
 
-	void compressContours(std::vector<std::vector<cv::Point>>& target) {
-		int passes = 8;
+	void simplifyContours(std::vector<std::vector<cv::Point>>& target) {
+		int passes = 16;
 		double start_threshold = 0.98;
-		double relax_per_pass = 0.45 / passes;
+		double relax_per_pass = 0.26 / passes;
 
 		for (int pass = 0; pass < passes; pass++) {
 			for (int cindex = 0; cindex < target.size(); cindex++) {
@@ -157,5 +202,59 @@ namespace pi {
 		rect.height = y_max - y_min;
 
 		return rect;
+	}
+
+	void thinningAlgorithm(cv::Mat& input, cv::Mat& output) {
+		if (input.type() != CV_8UC1) {
+			throw std::exception("OH shiettt");
+		}
+
+		bool repeat = true;
+		int b_count = 0;
+		int a_count = 0;
+
+		uint8_t region[9] = { 0 };
+
+		while (repeat) {
+			repeat = false;
+
+			for (int y = 1; y < input.rows - 1; y++) {
+				for (int x = 1; x < input.cols - 1; x++) {
+
+					region[0] = input.at<uint8_t>(y - 1, x - 1);
+					region[1] = input.at<uint8_t>(y - 1, x);
+					region[2] = input.at<uint8_t>(y - 1, x + 1);
+					region[3] = input.at<uint8_t>(y, x - 1);
+					region[4] = input.at<uint8_t>(y, x);
+					region[5] = input.at<uint8_t>(y, x + 1);
+					region[6] = input.at<uint8_t>(y + 1, x - 1);
+					region[7] = input.at<uint8_t>(y + 1, x);
+					region[8] = input.at<uint8_t>(y + 1, x + 1);
+
+					b_count = 0;
+
+					for (int i = 0; ) {
+						if (lol == 0) {
+							b_count++;
+						}
+
+						if ()
+					}
+				}
+			}
+		}
+	}
+
+	void ImageProcess::Run(cv::Mat& input, cv::Mat& output)
+	{
+		cv::Mat current = input.clone();
+		cv::Mat next;
+
+		for (auto& func : steps) {
+			func(current, next);
+			current = next;
+		}
+
+		output = current;
 	}
 }
