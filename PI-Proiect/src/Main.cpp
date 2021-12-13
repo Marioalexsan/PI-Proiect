@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp>
 #include <filesystem>
 #include "Helper.hpp"
+#include "Helper.hpp"
 
 
 int main(int argc, char** argv) {
@@ -82,6 +83,15 @@ int main(int argc, char** argv) {
 		cv::add(input, output, output);
 		cv::imshow("Sharpen", output);
 	};
+
+	/*
+	auto houghStep = [&](cv::Mat& input, cv::Mat& output)
+	{
+		hough_transform(input, output);
+		cv::add(input, output, output);
+		cv::imshow("Hough transform", output);
+	};
+	*/
 
 	// Actual processing
 

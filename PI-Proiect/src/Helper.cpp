@@ -233,6 +233,7 @@ namespace pi {
 
 					b_count = 0;
 
+					/*
 					for (int i = 0; ) {
 						if (lol == 0) {
 							b_count++;
@@ -240,6 +241,7 @@ namespace pi {
 
 						if ()
 					}
+					*/
 				}
 			}
 		}
