@@ -1,6 +1,36 @@
 #include "Helper.hpp"
 
 namespace pi {
+
+	#pragma region("Image Process")
+
+	ImageProcess::ImageProcess() {}
+
+	ImageProcess::~ImageProcess() {}
+
+	void ImageProcess::Run(cv::Mat& input, cv::Mat& output)
+	{
+		cv::Mat current = input.clone();
+		cv::Mat next;
+
+		for (auto& func : steps) {
+			func(current, next);
+			current = next;
+		}
+
+		output = current;
+	}
+
+	void ImageProcess::AddStep(std::function<void(cv::Mat&, cv::Mat&)> step) {
+		steps.push_back(step);
+	}
+
+	void ImageProcess::Clear() {
+		steps.clear();
+	}
+
+	#pragma endregion
+
 	double lineCos(cv::Point a, cv::Point b, cv::Point c) {
 		cv::Point vec_ab = a - b;
 		cv::Point vec_bc = c - b;
@@ -204,57 +234,121 @@ namespace pi {
 		return rect;
 	}
 
+	/// <summary>
+	/// Implements the Zhang-Suen line thinning algorithm.
+	/// </summary>
+	/// <param name="input"></param>
+	/// <param name="output"></param>
 	void thinningAlgorithm(cv::Mat& input, cv::Mat& output) {
 		if (input.type() != CV_8UC1) {
-			throw std::exception("OH shiettt");
+			throw std::exception("This algorithm supports grayscale images only.");
 		}
 
+		output = input.clone();
+
+		std::vector<bool> markers((uint64_t)input.rows * input.cols);
+
 		bool repeat = true;
-		int b_count = 0;
+		int black_neighbours = 0;
+		int white_black_transitions = 0;
 		int a_count = 0;
 
 		uint8_t region[9] = { 0 };
 
+		for (int x = 0; x < output.cols; x++) {
+			output.at<uint8_t>(0, x) = 255;
+			output.at<uint8_t>(output.rows - 1, x) = 255;
+		}
+
+		for (int y = 0; y < output.rows; y++) {
+			output.at<uint8_t>(y, 0) = 255;
+			output.at<uint8_t>(y, output.cols - 1) = 255;
+		}
+
+		const int threshold = 128;
+
+		for (int y = 1; y < output.rows - 1; y++) {
+			for (int x = 1; x < output.cols - 1; x++) {
+				uint8_t& value = output.at<uint8_t>(y, 0);
+
+				value = value >= threshold ? 255 : 0;
+			}
+		}
+
 		while (repeat) {
 			repeat = false;
+			white_black_transitions = 0;
 
-			for (int y = 1; y < input.rows - 1; y++) {
-				for (int x = 1; x < input.cols - 1; x++) {
+			for (int i = 0; i < markers.size(); i++) {
+				markers[i] = false;
+			}
 
-					region[0] = input.at<uint8_t>(y - 1, x - 1);
-					region[1] = input.at<uint8_t>(y - 1, x);
-					region[2] = input.at<uint8_t>(y - 1, x + 1);
-					region[3] = input.at<uint8_t>(y, x - 1);
-					region[4] = input.at<uint8_t>(y, x);
-					region[5] = input.at<uint8_t>(y, x + 1);
-					region[6] = input.at<uint8_t>(y + 1, x - 1);
-					region[7] = input.at<uint8_t>(y + 1, x);
-					region[8] = input.at<uint8_t>(y + 1, x + 1);
+			for (int step = 0; step <= 1; step++) {
+				// Two steps must be done.
+				// The only differenece between them 
 
-					b_count = 0;
+				for (int y = 1; y < output.rows - 1; y++) {
+					for (int x = 1; x < output.cols - 1; x++) {
+						region[0] = output.at<uint8_t>(y, x);
 
-					for (int i = 0; ) {
-						if (lol == 0) {
-							b_count++;
+						if (region[0] == 255) {
+							continue;
 						}
 
-						if ()
+						// 8 1 2
+						// 7 0 3
+						// 6 5 4
+						// Maybe we can optimize this later?
+
+						region[1] = output.at<uint8_t>(y - 1, x);
+						region[2] = output.at<uint8_t>(y - 1, x + 1);
+						region[3] = output.at<uint8_t>(y, x + 1);
+						region[4] = output.at<uint8_t>(y + 1, x + 1);
+						region[5] = output.at<uint8_t>(y + 1, x);
+						region[6] = output.at<uint8_t>(y + 1, x - 1);
+						region[7] = output.at<uint8_t>(y, x - 1);
+						region[8] = output.at<uint8_t>(y - 1, x - 1);
+
+						black_neighbours = 0;
+						white_black_transitions = 0;
+
+						for (int i = 1; i <= 8; i++) {
+							if (region[i] == 0) {
+								black_neighbours++;
+							}
+
+							int next = i == 8 ? 1 : i + 1;
+							if (region[i] > region[next]) {
+								white_black_transitions++;
+							}
+						}
+
+						if (step == 0) {
+							markers[x + (uint64_t) y * output.cols] =
+								black_neighbours >= 2 && black_neighbours <= 6 &&
+								white_black_transitions == 1 &&
+								(region[1] || region[3] || region[5]) &&
+								(region[3] || region[5] || region[7]);
+						}
+						else {
+							markers[x + (uint64_t) y * output.cols] =
+								black_neighbours >= 2 && black_neighbours <= 6 &&
+								white_black_transitions == 1 &&
+								(region[7] || region[1] || region[3]) &&
+								(region[5] || region[7] || region[1]);
+						}
+					}
+				}
+
+				for (int y = 0; y < output.rows - 1; y++) {
+					for (int x = 0; x < output.cols - 1; x++) {
+						if (markers[x + (uint64_t)y * output.cols]) {
+							output.at<uint8_t>(y, x) = 255;
+							repeat = true;
+						}
 					}
 				}
 			}
 		}
-	}
-
-	void ImageProcess::Run(cv::Mat& input, cv::Mat& output)
-	{
-		cv::Mat current = input.clone();
-		cv::Mat next;
-
-		for (auto& func : steps) {
-			func(current, next);
-			current = next;
-		}
-
-		output = current;
 	}
 }

@@ -6,8 +6,19 @@
 
 namespace pi {
 	class ImageProcess {
-	public:
+	private:
 		std::vector<std::function<void(cv::Mat&, cv::Mat&)>> steps;
+
+	public:
+		ImageProcess();
+		ImageProcess(ImageProcess&) = delete;
+		ImageProcess(ImageProcess&&) = delete;
+
+		~ImageProcess();
+
+		void AddStep(std::function<void(cv::Mat&, cv::Mat&)> step);
+
+		void Clear();
 
 		void Run(cv::Mat& input, cv::Mat& output);
 	};
@@ -43,6 +54,10 @@ namespace pi {
 	void applyContrast(cv::Mat& img, float a, float b, float sa, float sb);
 
 	Rectangle getBoundingBox(std::vector<cv::Point>& points);
+
+	void thinningAlgorithm(cv::Mat& input, cv::Mat& output);
+
+	void thinningAlgorithm_v2(cv::Mat& input, cv::Mat& output);
 }
 
 #endif

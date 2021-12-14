@@ -112,13 +112,10 @@ int main(int argc, char** argv) {
 
 		pi::ImageProcess process;
 
-		process.steps = {
-			grayscaleStep,
-			filterStep,
-			equalizeStep,
-			//thresholdStep,
-			cannyStep
-		};
+		process.AddStep(grayscaleStep);
+		process.AddStep(filterStep);
+		process.AddStep(equalizeStep);
+		process.AddStep(cannyStep);
 
 		cv::Mat result;
 		process.Run(original, result);
@@ -198,12 +195,9 @@ int main(int argc, char** argv) {
 
 		pi::ImageProcess wordProcess;
 
-		wordProcess.steps = {
-			grayscaleStep,
-			//sharpenStep,
-			thresholdStep,
-			cannyStep
-		};
+		wordProcess.AddStep(grayscaleStep);
+		wordProcess.AddStep(thresholdStep);
+		wordProcess.AddStep(cannyStep);
 
 		cv::Mat wordResult;
 		wordProcess.Run(plate, wordResult);
@@ -234,6 +228,11 @@ int main(int argc, char** argv) {
 
 			auto rect = pi::getBoundingBox(contour);
 			auto letter = cv::Mat(plate, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
+
+
+			cv::cvtColor(letter, letter, cv::COLOR_BGR2GRAY);
+			cv::threshold(letter, letter, 0.0, 255.0, cv::THRESH_OTSU);
+			pi::thinningAlgorithm(letter, letter);
 			cv::resize(letter, letter, cv::Size(), 4.f, 4.f, 1);
 
 			cv::imshow(std::to_string(rand() % 1000) + " Letter", letter);
