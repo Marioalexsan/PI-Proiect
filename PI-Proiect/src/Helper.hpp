@@ -23,9 +23,13 @@ namespace pi {
 		void Run(cv::Mat& input, cv::Mat& output);
 	};
 
-	class ImageLetter {
-	public:
+	struct ImageLetter {
 		cv::Mat image;
+
+		std::vector<double> regions;
+
+		int regionCols;
+		int regionRows;
 	};
 
 	struct Rectangle {
@@ -57,7 +61,7 @@ namespace pi {
 
 	void thinningAlgorithm(cv::Mat& input, cv::Mat& output);
 
-	void thinningAlgorithm_v2(cv::Mat& input, cv::Mat& output);
+	void computeRegions(ImageLetter& letter, int regionCols, int regionRows);
 }
 
 #endif

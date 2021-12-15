@@ -3,6 +3,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
 #include <filesystem>
+#include <iomanip>
 #include "Helper.hpp"
 
 
@@ -232,10 +233,30 @@ int main(int argc, char** argv) {
 
 			cv::cvtColor(letter, letter, cv::COLOR_BGR2GRAY);
 			cv::threshold(letter, letter, 0.0, 255.0, cv::THRESH_OTSU);
-			pi::thinningAlgorithm(letter, letter);
+			//pi::thinningAlgorithm(letter, letter);
+
+			il.image = letter;
+
+			pi::computeRegions(il, 7, 7);
+
+			auto lol = std::to_string(rand() % 1000);
+
+			std::cout << std::setprecision(2) << std::fixed;
+
+			std::cout << "Computed regions for letter " << lol << std::endl;
+
+			for (int y = 0; y < il.regionRows; y++) {
+				for (int x = 0; x < il.regionCols; x++) {
+					std::cout << il.regions[x + il.regionCols * y] << " ";
+				}
+				std::cout << std::endl;
+			}
+			
+			std::cout << std::endl;
+
 			cv::resize(letter, letter, cv::Size(), 4.f, 4.f, 1);
 
-			cv::imshow(std::to_string(rand() % 1000) + " Letter", letter);
+			cv::imshow(lol + " Letter", letter);
 
 			il.image = letter;
 			letters.push_back(il);

@@ -351,4 +351,33 @@ namespace pi {
 			}
 		}
 	}
+
+	void computeRegions(ImageLetter& letter, int regionCols, int regionRows) {
+		letter.regions.clear();
+		letter.regions.resize((uint64_t)regionCols * regionRows);
+
+		int region_width = (int) ceil((double)letter.image.cols / regionCols);
+		int region_height = (int) ceil((double)letter.image.rows / regionRows);
+
+		for (int y = 0; y < letter.image.rows; y++) {
+			for (int x = 0; x < letter.image.cols; x++) {
+				auto value = letter.image.at<uint8_t>(y, x);
+
+				double& ref = letter.regions[x / region_width + regionCols * (y / region_height)];
+
+				if (value <= 127) {
+					ref += 1.0;
+				}
+			}
+		}
+
+		for (int y = 0; y < regionRows; y++) {
+			for (int x = 0; x < regionCols; x++) {
+				letter.regions[x + regionCols * y] /= (uint64_t)region_width * region_height;
+			}
+		}
+
+		letter.regionCols = regionCols;
+		letter.regionRows = regionRows;
+	}
 }
