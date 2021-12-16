@@ -2,13 +2,11 @@
 
 namespace pi {
 
-	#pragma region("Image Process")
+	OperationList::OperationList() {}
 
-	ImageProcess::ImageProcess() {}
+	OperationList::~OperationList() {}
 
-	ImageProcess::~ImageProcess() {}
-
-	void ImageProcess::Run(cv::Mat& input, cv::Mat& output)
+	void OperationList::Run(cv::Mat& input, cv::Mat& output)
 	{
 		cv::Mat current = input.clone();
 		cv::Mat next;
@@ -21,15 +19,13 @@ namespace pi {
 		output = current;
 	}
 
-	void ImageProcess::AddStep(std::function<void(cv::Mat&, cv::Mat&)> step) {
+	void OperationList::AddStep(std::function<void(cv::Mat&, cv::Mat&)> step) {
 		steps.push_back(step);
 	}
 
-	void ImageProcess::Clear() {
+	void OperationList::Clear() {
 		steps.clear();
 	}
-
-	#pragma endregion
 
 	double lineCos(cv::Point a, cv::Point b, cv::Point c) {
 		cv::Point vec_ab = a - b;
@@ -352,32 +348,57 @@ namespace pi {
 		}
 	}
 
-	void computeRegions(ImageLetter& letter, int regionCols, int regionRows) {
-		letter.regions.clear();
-		letter.regions.resize((uint64_t)regionCols * regionRows);
+	cv::Mat getRegionFeatures(cv::Mat& image, int region_rows, int region_cols) {
+		const uint8_t threshold = 127;
 
-		int region_width = (int) ceil((double)letter.image.cols / regionCols);
-		int region_height = (int) ceil((double)letter.image.rows / regionRows);
+		cv::Mat regions = cv::Mat::zeros(region_rows, region_cols, CV_64F);
 
-		for (int y = 0; y < letter.image.rows; y++) {
-			for (int x = 0; x < letter.image.cols; x++) {
-				auto value = letter.image.at<uint8_t>(y, x);
+		int cell_width = (int) ceil((double)image.cols / region_cols);
+		int cell_height = (int) ceil((double)image.rows / region_rows);
 
-				double& ref = letter.regions[x / region_width + regionCols * (y / region_height)];
+		for (int y = 0; y < image.rows; y++) {
+			for (int x = 0; x < image.cols; x++) {
+				auto value = image.at<uint8_t>(y, x);
 
-				if (value <= 127) {
+				double& ref = regions.at<double>(y / cell_height, x / cell_width);
+
+				if (value <= threshold) {
 					ref += 1.0;
 				}
 			}
 		}
 
-		for (int y = 0; y < regionRows; y++) {
-			for (int x = 0; x < regionCols; x++) {
-				letter.regions[x + regionCols * y] /= (uint64_t)region_width * region_height;
+		for (int y = 0; y < region_rows; y++) {
+			for (int x = 0; x < region_cols; x++) {
+				regions.at<double>(y, x) /= (double)cell_width * cell_height;
 			}
 		}
 
-		letter.regionCols = regionCols;
-		letter.regionRows = regionRows;
+		return regions;
+	}
+
+	double getLetterDistance(cv::Mat& ref, cv::Mat& smpl) {
+		if (ref.type() != CV_64F || ref.type() != smpl.type() || ref.size() != smpl.size()) {
+			throw new std::exception("Invalid input matrices!");
+		}
+
+		double distance = 0.0;
+
+		uint64_t size = ref.size().width * ref.size().height;
+
+
+		double* data_ref = ref.ptr<double>();
+		double* data_smpl = smpl.ptr<double>();
+
+		for (int i = 0; i < size; i++) {
+			double value = abs(*data_ref - *data_smpl);
+
+			distance += value * value;
+
+			data_ref++;
+			data_smpl++;
+		}
+
+		return distance;
 	}
 }

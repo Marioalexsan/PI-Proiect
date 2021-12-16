@@ -5,47 +5,21 @@
 #include <filesystem>
 #include <iomanip>
 #include "Helper.hpp"
+#include "Constants.hpp"
+#include <unordered_map>
 
 
 int main(int argc, char** argv) {
 
-	// Utility Stuff
+	cv::Mat font_sample = cv::imread("Resources\\Mittelschrift_sample.png", cv::IMREAD_GRAYSCALE);
 
-	cv::Mat gauss3x3 = cv::Mat_<double>(
-		{
-			1, 2, 1,
-			2, 4, 2,
-			1, 2, 1
-		}
-	).reshape(0, 3) * (1.0 / 16.0);
+	std::unordered_map<char, cv::Mat> letter_regions;
 
-	cv::Mat gauss5x5 = cv::Mat_<double>(
-		{
-			2, 4, 5, 4, 2,
-			4, 9, 12, 9, 4,
-			5, 12, 15, 12, 5,
-			4, 9, 12, 9, 4,
-			2, 4, 5, 4, 2
-		}
-	).reshape(0, 5) * (1.0 / 159.0);
+	for (auto& pair : pi::letter_sheet) {
+		cv::Mat letter_image = cv::Mat(font_sample, pair.second);
 
-	cv::Mat average3x3 = cv::Mat_<double>(
-		{
-			1, 1, 1,
-			1, 1, 1,
-			1, 1, 1
-		}
-	).reshape(0, 3) * (1.0 / 9.0);
-
-	cv::Mat sharpen3x3 = cv::Mat_<double>(
-		{
-			-1, -1, -1,
-			-1, 9, -1,
-			-1, -1, -1
-		}
-	).reshape(0, 3) * (1.0 / 9.0);
-
-
+		letter_regions[pair.first] = pi::getRegionFeatures(letter_image, 7, 7);
+	}
 
 	auto grayscaleStep = [](cv::Mat& input, cv::Mat& output)
 	{
@@ -61,7 +35,7 @@ int main(int argc, char** argv) {
 
 	auto filterStep = [&](cv::Mat& input, cv::Mat& output)
 	{
-		cv::filter2D(input, output, -1, gauss3x3);
+		cv::filter2D(input, output, -1, pi::gauss3x3);
 		cv::imshow("Filter", output);
 	};
 
@@ -79,7 +53,7 @@ int main(int argc, char** argv) {
 
 	auto sharpenStep = [&](cv::Mat& input, cv::Mat& output)
 	{
-		cv::filter2D(input, output, -1, sharpen3x3);
+		cv::filter2D(input, output, -1, pi::sharpen3x3);
 		cv::add(input, output, output);
 		cv::imshow("Sharpen", output);
 	};
@@ -111,7 +85,7 @@ int main(int argc, char** argv) {
 
 		// Do processing
 
-		pi::ImageProcess process;
+		pi::OperationList process;
 
 		process.AddStep(grayscaleStep);
 		process.AddStep(filterStep);
@@ -181,7 +155,7 @@ int main(int argc, char** argv) {
 
 				cv::imshow("License Plate", plate);
 
-				std::cout << "Color distance from white: " << pi::getColorMatch(plate, cv::Scalar::all(255));
+				std::cout << "Color distance from white: " << pi::getColorMatch(plate, cv::Scalar::all(255)) << std::endl;
 
 				break;
 			}
@@ -194,7 +168,7 @@ int main(int argc, char** argv) {
 			return 0;
 		}
 
-		pi::ImageProcess wordProcess;
+		pi::OperationList wordProcess;
 
 		wordProcess.AddStep(grayscaleStep);
 		wordProcess.AddStep(thresholdStep);
@@ -205,7 +179,7 @@ int main(int argc, char** argv) {
 
 		cv::findContours(wordResult, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
-		compress = true;
+		compress = false;
 		pruneShort = true;
 
 		// Simplify contours - multiple straight (or almost straight) lines become a single line
@@ -222,44 +196,41 @@ int main(int argc, char** argv) {
 			pi::pruneShort(contours, 20);
 		}
 
-		std::vector<pi::ImageLetter> letters;
+		std::vector<cv::Mat> letters;
 
 		for (auto& contour : contours) {
-			pi::ImageLetter il;
-
 			auto rect = pi::getBoundingBox(contour);
-			auto letter = cv::Mat(plate, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
 
+			cv::Mat image = cv::Mat(plate, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
 
-			cv::cvtColor(letter, letter, cv::COLOR_BGR2GRAY);
-			cv::threshold(letter, letter, 0.0, 255.0, cv::THRESH_OTSU);
+			cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
+			cv::threshold(image, image, 0.0, 255.0, cv::THRESH_OTSU);
 			//pi::thinningAlgorithm(letter, letter);
 
-			il.image = letter;
-
-			pi::computeRegions(il, 7, 7);
+			cv::Mat region = pi::getRegionFeatures(image, 7, 7);
 
 			auto lol = std::to_string(rand() % 1000);
 
 			std::cout << std::setprecision(2) << std::fixed;
 
-			std::cout << "Computed regions for letter " << lol << std::endl;
+			double lowest_distance = 2500.0;
+			char selected_character = '?';
 
-			for (int y = 0; y < il.regionRows; y++) {
-				for (int x = 0; x < il.regionCols; x++) {
-					std::cout << il.regions[x + il.regionCols * y] << " ";
+			for (auto& pair : letter_regions) {
+				double distance = pi::getLetterDistance(pair.second, region);
+
+				if (distance < lowest_distance) {
+					lowest_distance = distance;
+					selected_character = pair.first;
 				}
-				std::cout << std::endl;
 			}
-			
-			std::cout << std::endl;
 
-			cv::resize(letter, letter, cv::Size(), 4.f, 4.f, 1);
+			cv::resize(image, image, cv::Size(), 4.f, 4.f, 0);
+			cv::imshow("Letter" + lol, image);
 
-			cv::imshow(lol + " Letter", letter);
+			std::cout << "Letter " << lol << " is " << selected_character << ", distance: " << lowest_distance << std::endl;
 
-			il.image = letter;
-			letters.push_back(il);
+			letters.push_back(region);
 		}
 
 		cv::imshow("Word result", wordResult);

@@ -5,31 +5,24 @@
 #include <opencv2/core.hpp>
 
 namespace pi {
-	class ImageProcess {
+	class OperationList {
 	private:
+
 		std::vector<std::function<void(cv::Mat&, cv::Mat&)>> steps;
 
 	public:
-		ImageProcess();
-		ImageProcess(ImageProcess&) = delete;
-		ImageProcess(ImageProcess&&) = delete;
 
-		~ImageProcess();
+		OperationList();
+		OperationList(OperationList&) = delete;
+		OperationList(OperationList&&) = delete;
+
+		~OperationList();
 
 		void AddStep(std::function<void(cv::Mat&, cv::Mat&)> step);
 
 		void Clear();
 
 		void Run(cv::Mat& input, cv::Mat& output);
-	};
-
-	struct ImageLetter {
-		cv::Mat image;
-
-		std::vector<double> regions;
-
-		int regionCols;
-		int regionRows;
 	};
 
 	struct Rectangle {
@@ -61,7 +54,9 @@ namespace pi {
 
 	void thinningAlgorithm(cv::Mat& input, cv::Mat& output);
 
-	void computeRegions(ImageLetter& letter, int regionCols, int regionRows);
+	cv::Mat getRegionFeatures(cv::Mat& letter, int rows, int cols);
+
+	double getLetterDistance(cv::Mat& ref, cv::Mat& smpl);
 }
 
 #endif
