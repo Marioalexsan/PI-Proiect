@@ -46,7 +46,7 @@ public:
 *					Functions			*
 *****************************************
 */
-void hough_transform(cv::Mat& input, cv::Mat& output);
+std::vector<hough_line> hough_transform(cv::Mat& input, cv::Mat& output);
 
 /*
 * \brief
