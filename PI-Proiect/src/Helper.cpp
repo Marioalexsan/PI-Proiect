@@ -362,19 +362,6 @@ namespace pi {
 				auto value = image.at<uint8_t>(y, x);
 				double& ref = regions.at<double>(y / cell_height, x / cell_width);
 
-				/*
-				int region_start_x = x / ;
-				int region_end_x;
-
-				int region_start_y;
-				int region_end_y;
-
-				for (int region_y = region_start_y; region_y < region_end_y; region_y++) {
-					for (int region_x = region_start_x; region_x < region_end_x; region_x++) {
-						double& ref = regions.at<double>(y / cell_height, x / cell_width);
-					}
-				}
-				*/
 				if (value <= threshold) {
 					ref += 1.0;
 				}

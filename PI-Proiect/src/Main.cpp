@@ -227,7 +227,7 @@ int main(int argc, char** argv) {
 
 			double height_factor = abs(rect.height - target_height) / target_height;
 
-			if (height_factor > 0.5 && width_factor > 0.5 || height_factor > 0.75 || width_factor > 0.75) {
+			if (height_factor > 0.5 && width_factor > 0.5 || (height_factor > 0.75 && width_factor > 0.25) || (width_factor > 0.75 && height_factor > 0.25)) {
 				std::cout << "Skipped letter " << lol << std::endl;
 				continue;
 			}
