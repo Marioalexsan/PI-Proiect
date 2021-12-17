@@ -37,6 +37,8 @@ class hough_line {
 	int score;
 
 public:
+	double x1, y1, x2, y2;
+	hough_line();
 	hough_line(cv::Mat& input, double theta, double r, int score);
 	int compare_score(hough_line h);
 };
@@ -52,6 +54,6 @@ std::vector<hough_line> hough_transform(cv::Mat& input, cv::Mat& output);
 * \brief
 *	this function is drawing the lines that the Hough trnsform function created
 */
-void draw_lines_hough(cv::Mat& input, cv::Mat& output);
+void draw_lines_hough(cv::Mat& input, cv::Mat& output, std::vector<hough_line> linii);
 
 #endif

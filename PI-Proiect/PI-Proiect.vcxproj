@@ -19,12 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Hough.cpp" />
+    <ClCompile Include="src\Hough.cpp" />
     <ClCompile Include="src\Helper.cpp" />
     <ClCompile Include="src\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Hough.hpp" />
+    <ClInclude Include="src\Hough.hpp" />
     <ClInclude Include="src\Helper.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -4,7 +4,7 @@
 #include <opencv2/imgproc.hpp>
 #include <filesystem>
 #include "Helper.hpp"
-#include "Helper.hpp"
+#include "Hough.hpp"
 
 
 int main(int argc, char** argv) {
@@ -132,6 +132,12 @@ int main(int argc, char** argv) {
 
 		cv::Mat result;
 		process.Run(original, result);
+
+
+		/////////////////////////////////////////////////////
+		std::vector<hough_line> h = hough_transform(result, result);
+		draw_lines_hough(result, result, h);
+		/////////////////////////////////////////////////////
 
 		// Find contours using OpenCV
 

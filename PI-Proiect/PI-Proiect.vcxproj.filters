@@ -7,7 +7,7 @@
     <ClCompile Include="src\Helper.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="Hough.cpp" />
+    <ClCompile Include="src\Hough.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -18,6 +18,6 @@
     <ClInclude Include="src\Helper.hpp">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="Hough.hpp" />
+    <ClInclude Include="src\Hough.hpp" />
   </ItemGroup>
 </Project>
