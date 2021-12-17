@@ -377,6 +377,62 @@ namespace pi {
 		return regions;
 	}
 
+	double getMappedDistance(cv::Mat& ref, cv::Mat& smpl) {
+		if (ref.type() != CV_8UC1 || ref.type() != smpl.type()) {
+			throw new std::exception("Invalid input matrices!");
+		}
+
+		double distance = 0.0;
+
+		double ref_x = 0.0, ref_y = 0.0, smpl_x = 0.0, smpl_y = 0.0;
+
+		double ref_advance_x, ref_advance_y, smpl_advance_x, smpl_advance_y;
+
+		double ref_width = ref.size().width, ref_height = ref.size().height;
+		double smpl_width = smpl.size().width, smpl_height = smpl.size().height;
+
+		if (ref_width > smpl_width) {
+			ref_advance_x = 1.0f;
+			smpl_advance_x = smpl_width / ref_width;
+		}
+		else {
+			ref_advance_x = ref_width / smpl_width;
+			smpl_advance_x = 1.0f;
+		}
+
+		if (ref_height > smpl_height) {
+			ref_advance_y = 1.0f;
+			smpl_advance_y = smpl_height / ref_height;
+		}
+		else {
+			ref_advance_y = ref_height / smpl_height;
+			smpl_advance_y = 1.0f;
+		}
+
+		int count = 0;
+
+		while (ref_y < ref_height && smpl_y < smpl_height) {
+			double value = abs(ref.at<uint8_t>((int)ref_y, (int)ref_x) - smpl.at<uint8_t>((int)smpl_y, (int)smpl_x)) / 255.0;
+			distance += value * value;
+			count++;
+
+			ref_x += ref_advance_x;
+			smpl_x += smpl_advance_x;
+
+			if (ref_x >= ref_width || smpl_x >= smpl_width) {
+				ref_x = 0.0;
+				smpl_x = 0.0;
+
+				ref_y += ref_advance_y;
+				smpl_y += smpl_advance_y;
+			}
+		}
+
+		distance /= count;
+
+		return distance;
+	}
+
 	double getLetterDistance(cv::Mat& ref, cv::Mat& smpl) {
 		if (ref.type() != CV_64F || ref.type() != smpl.type() || ref.size() != smpl.size()) {
 			throw new std::exception("Invalid input matrices!");

@@ -17,9 +17,7 @@ int main(int argc, char** argv) {
 	std::unordered_map<char, cv::Mat> letter_regions;
 
 	for (auto& pair : pi::letter_sheet) {
-		cv::Mat letter_image = cv::Mat(font_sample, pair.second);
-
-		letter_regions[pair.first] = pi::getRegionFeatures(letter_image, dimension);
+		letter_regions[pair.first] = cv::Mat(font_sample, pair.second);
 	}
 
 	auto grayscaleStep = [](cv::Mat& input, cv::Mat& output)
@@ -193,28 +191,49 @@ int main(int argc, char** argv) {
 
 		std::vector<cv::Mat> letters;
 
-		std::vector<double> widths;
+		// Calculate median height and width
+		// The range of heights for letters is small
+		// However, letters can have varying widths
+
 		std::vector<double> heights;
+		std::vector<double> widths;
 
 		for (auto& contour : contours) {
-			widths.push_back(pi::getBoundingBox(contour).width);
 			heights.push_back(pi::getBoundingBox(contour).height);
+			widths.push_back(pi::getBoundingBox(contour).width);
 		}
 
-		std::sort(widths.begin(), widths.end());
 		std::sort(heights.begin(), heights.end());
+		std::sort(widths.begin(), widths.end());
 
-		int64_t mid = widths.size() / 2;
+		int median_index = widths.size() / 2;
 
-		double target_width = widths[mid];
-		double target_height = heights[mid];
+		double median_height = heights[median_index];
+		double median_width = widths[median_index];
 
-		if (contours.size() >= 3) {
-			target_width = (widths[mid - 1] + target_width + widths[mid + 1]) / 3.0;
-			target_height = (heights[mid - 1] + target_height + heights[mid + 1]) / 3.0;
+		std::cout << "Median Width: " << median_width << " | Median Height: " << median_height << std::endl;
+
+		if (widths.size() > 3) {
+			// Combine the median with the average of the element to the left and the right
+			// This provides a slightly better value for a letter's width
+
+			median_width = (widths[median_index - 1LL] + median_width + widths[median_index + 1LL]) / 3.0;
 		}
 
-		std::cout << target_width << " - " << target_height << std::endl;
+		// Drop all contours that vary by >10% for height, or >75% for width
+		// Those are unlikely to be letters
+
+		for (int i = 0; i < contours.size(); i++) {
+			auto box = pi::getBoundingBox(contours[i]);
+
+			if (abs(box.width - median_width) / median_width >= 0.75 || abs(box.height - median_height) / median_height > 0.1) {
+				contours.erase(contours.begin() + i);
+				i--;
+				std::cout << "Skipped a bounding box: " << box.width << ", " << box.height << " at " << box.x << ", " << box.y << std::endl;
+			}
+		}
+
+		std::cout << median_width << " - " << median_height << std::endl;
 
 		for (auto& contour : contours) {
 			auto rect = pi::getBoundingBox(contour);
@@ -223,20 +242,15 @@ int main(int argc, char** argv) {
 
 			std::cout << rect.width << " " << rect.height << std::endl;
 
-			double width_factor = abs(rect.width - target_width) / target_width;
+			double width_factor = abs(rect.width - median_width) / median_width;
+			double height_factor = abs(rect.height - median_height) / median_height;
 
-			double height_factor = abs(rect.height - target_height) / target_height;
-
-			if (height_factor > 0.5 && width_factor > 0.5 || (height_factor > 0.75 && width_factor > 0.25) || (width_factor > 0.75 && height_factor > 0.25)) {
-				std::cout << "Skipped letter " << lol << std::endl;
-				continue;
-			}
+			// The height for a font varies by a low amount
+			// Meanwhile the width can vary by a high amount
 
 			cv::Mat image = cv::Mat(plate, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
 
 			cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-			//cv::threshold(image, image, 0.0, 255.0, cv::THRESH_OTSU);
-			//pi::thinningAlgorithm(letter, letter);
 
 			cv::Mat region = pi::getRegionFeatures(image, dimension);
 
@@ -245,11 +259,14 @@ int main(int argc, char** argv) {
 			double lowest_distance = 2500.0;
 			char selected_character = '?';
 
-			for (auto& pair : letter_regions) {
-				double distance = pi::getLetterDistance(pair.second, region);
 
-				if (distance < lowest_distance) {
-					lowest_distance = distance;
+			for (auto& pair : letter_regions) {
+				cv::Mat oldRegion = pi::getRegionFeatures(pair.second, dimension);
+				//double distance = pi::getLetterDistance(oldRegion, region);
+				double newDistance = pi::getMappedDistance(pair.second, image);
+
+				if (newDistance < lowest_distance) {
+					lowest_distance = newDistance;
 					selected_character = pair.first;
 				}
 			}

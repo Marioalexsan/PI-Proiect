@@ -56,6 +56,8 @@ namespace pi {
 
 	cv::Mat getRegionFeatures(cv::Mat& image, int dimension);
 
+	double getMappedDistance(cv::Mat& ref, cv::Mat& smpl);
+
 	double getLetterDistance(cv::Mat& ref, cv::Mat& smpl);
 }
 
