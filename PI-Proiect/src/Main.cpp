@@ -8,6 +8,7 @@
 #include "Constants.hpp"
 #include <unordered_map>
 
+const int dimension = 7;
 
 int main(int argc, char** argv) {
 
@@ -18,44 +19,38 @@ int main(int argc, char** argv) {
 	for (auto& pair : pi::letter_sheet) {
 		cv::Mat letter_image = cv::Mat(font_sample, pair.second);
 
-		letter_regions[pair.first] = pi::getRegionFeatures(letter_image, 7, 7);
+		letter_regions[pair.first] = pi::getRegionFeatures(letter_image, dimension);
 	}
 
 	auto grayscaleStep = [](cv::Mat& input, cv::Mat& output)
 	{
 		cv::cvtColor(input, output, cv::COLOR_BGR2GRAY);
-		cv::imshow("Grayscale", output);
 	};
 
 	auto thresholdStep = [](cv::Mat& input, cv::Mat& output)
 	{
 		cv::threshold(input, output, 128, 255, cv::THRESH_OTSU);
-		cv::imshow("Threshold", output);
 	};
 
 	auto filterStep = [&](cv::Mat& input, cv::Mat& output)
 	{
 		cv::filter2D(input, output, -1, pi::gauss3x3);
-		cv::imshow("Filter", output);
 	};
 
 	auto equalizeStep = [](cv::Mat& input, cv::Mat& output)
 	{
 		cv::equalizeHist(input, output);
-		cv::imshow("Equalize", output);
 	};
 
 	auto cannyStep = [](cv::Mat& input, cv::Mat& output)
 	{
 		cv::Canny(input, output, 100, 210, 3);
-		cv::imshow("Canny", output);
 	};
 
 	auto sharpenStep = [&](cv::Mat& input, cv::Mat& output)
 	{
 		cv::filter2D(input, output, -1, pi::sharpen3x3);
 		cv::add(input, output, output);
-		cv::imshow("Sharpen", output);
 	};
 
 	// Actual processing
@@ -198,18 +193,52 @@ int main(int argc, char** argv) {
 
 		std::vector<cv::Mat> letters;
 
+		std::vector<double> widths;
+		std::vector<double> heights;
+
+		for (auto& contour : contours) {
+			widths.push_back(pi::getBoundingBox(contour).width);
+			heights.push_back(pi::getBoundingBox(contour).height);
+		}
+
+		std::sort(widths.begin(), widths.end());
+		std::sort(heights.begin(), heights.end());
+
+		int64_t mid = widths.size() / 2;
+
+		double target_width = widths[mid];
+		double target_height = heights[mid];
+
+		if (contours.size() >= 3) {
+			target_width = (widths[mid - 1] + target_width + widths[mid + 1]) / 3.0;
+			target_height = (heights[mid - 1] + target_height + heights[mid + 1]) / 3.0;
+		}
+
+		std::cout << target_width << " - " << target_height << std::endl;
+
 		for (auto& contour : contours) {
 			auto rect = pi::getBoundingBox(contour);
+
+			auto lol = std::to_string(rand() % 1000);
+
+			std::cout << rect.width << " " << rect.height << std::endl;
+
+			double width_factor = abs(rect.width - target_width) / target_width;
+
+			double height_factor = abs(rect.height - target_height) / target_height;
+
+			if (height_factor > 0.5 && width_factor > 0.5 || height_factor > 0.75 || width_factor > 0.75) {
+				std::cout << "Skipped letter " << lol << std::endl;
+				continue;
+			}
 
 			cv::Mat image = cv::Mat(plate, cv::Range(rect.y, rect.height + rect.y), cv::Range(rect.x, rect.width + rect.x));
 
 			cv::cvtColor(image, image, cv::COLOR_BGR2GRAY);
-			cv::threshold(image, image, 0.0, 255.0, cv::THRESH_OTSU);
+			//cv::threshold(image, image, 0.0, 255.0, cv::THRESH_OTSU);
 			//pi::thinningAlgorithm(letter, letter);
 
-			cv::Mat region = pi::getRegionFeatures(image, 7, 7);
-
-			auto lol = std::to_string(rand() % 1000);
+			cv::Mat region = pi::getRegionFeatures(image, dimension);
 
 			std::cout << std::setprecision(2) << std::fixed;
 

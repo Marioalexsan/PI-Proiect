@@ -348,28 +348,41 @@ namespace pi {
 		}
 	}
 
-	cv::Mat getRegionFeatures(cv::Mat& image, int region_rows, int region_cols) {
+	cv::Mat getRegionFeatures(cv::Mat& image, int dimension) {
 		const uint8_t threshold = 127;
 
-		cv::Mat regions = cv::Mat::zeros(region_rows, region_cols, CV_64F);
+		cv::Mat regions = cv::Mat::zeros(dimension, dimension, CV_64F);
+		cv::Mat region_totals = cv::Mat::zeros(dimension, dimension, CV_64F);
 
-		int cell_width = (int) ceil((double)image.cols / region_cols);
-		int cell_height = (int) ceil((double)image.rows / region_rows);
+		int cell_width = (int) ceil((double)image.cols / dimension);
+		int cell_height = (int) ceil((double)image.rows / dimension);
 
 		for (int y = 0; y < image.rows; y++) {
 			for (int x = 0; x < image.cols; x++) {
 				auto value = image.at<uint8_t>(y, x);
-
 				double& ref = regions.at<double>(y / cell_height, x / cell_width);
 
+				/*
+				int region_start_x = x / ;
+				int region_end_x;
+
+				int region_start_y;
+				int region_end_y;
+
+				for (int region_y = region_start_y; region_y < region_end_y; region_y++) {
+					for (int region_x = region_start_x; region_x < region_end_x; region_x++) {
+						double& ref = regions.at<double>(y / cell_height, x / cell_width);
+					}
+				}
+				*/
 				if (value <= threshold) {
 					ref += 1.0;
 				}
 			}
 		}
 
-		for (int y = 0; y < region_rows; y++) {
-			for (int x = 0; x < region_cols; x++) {
+		for (int y = 0; y < dimension; y++) {
+			for (int x = 0; x < dimension; x++) {
 				regions.at<double>(y, x) /= (double)cell_width * cell_height;
 			}
 		}

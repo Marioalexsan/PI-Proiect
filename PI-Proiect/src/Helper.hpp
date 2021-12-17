@@ -54,7 +54,7 @@ namespace pi {
 
 	void thinningAlgorithm(cv::Mat& input, cv::Mat& output);
 
-	cv::Mat getRegionFeatures(cv::Mat& letter, int rows, int cols);
+	cv::Mat getRegionFeatures(cv::Mat& image, int dimension);
 
 	double getLetterDistance(cv::Mat& ref, cv::Mat& smpl);
 }
