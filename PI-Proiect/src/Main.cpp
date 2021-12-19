@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 
 	std::unordered_map<char, cv::Mat> letter_regions;
 
-	for (auto& pair : pi::letter_sheet) {
+	for (auto& pair : pi::loadLetterRectangles("Resources\\Mittelschrift_regions.txt")) {
 		letter_regions[pair.first] = cv::Mat(font_sample, pair.second);
 	}
 

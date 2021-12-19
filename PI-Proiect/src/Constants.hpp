@@ -10,5 +10,5 @@ namespace pi {
 
 	extern const cv::Mat sharpen3x3;
 
-	extern const std::unordered_map<char, cv::Rect> letter_sheet;
+	std::unordered_map<char, cv::Rect> loadLetterRectangles(std::string path);
 }
