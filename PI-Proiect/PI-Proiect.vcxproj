@@ -19,11 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Gradient.cpp" />
     <ClCompile Include="src\Constants.cpp" />
     <ClCompile Include="src\Helper.cpp" />
     <ClCompile Include="src\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Project_Headers.hpp" />
+    <ClInclude Include="src\Gradient.hpp" />
     <ClInclude Include="src\Constants.hpp" />
     <ClInclude Include="src\Helper.hpp" />
   </ItemGroup>

@@ -1,5 +1,5 @@
 #pragma once
-#include <opencv2/imgproc.hpp>
+#include"Project_Headers.hpp"
 
 namespace pi {
 	extern const cv::Mat gauss3x3;
@@ -11,4 +11,8 @@ namespace pi {
 	extern const cv::Mat sharpen3x3;
 
 	std::unordered_map<char, cv::Rect> loadLetterRectangles(std::string path);
+
+	extern const cv::Mat Fx3x3;
+
+	extern const cv::Mat Fy3x3;
 }

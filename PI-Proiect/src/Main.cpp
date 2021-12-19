@@ -1,12 +1,7 @@
-#include <iostream>
-#include <string>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
-#include <filesystem>
-#include <iomanip>
 #include "Helper.hpp"
 #include "Constants.hpp"
-#include <unordered_map>
+#include "Gradient.hpp"
+
 
 const int dimension = 7;
 
@@ -270,6 +265,8 @@ int main(int argc, char** argv) {
 					selected_character = pair.first;
 				}
 			}
+
+			pi::contour_gradient(image, dimension);
 
 			cv::resize(image, image, cv::Size(), 4.f, 4.f, 0);
 			cv::imshow("Letter" + lol, image);

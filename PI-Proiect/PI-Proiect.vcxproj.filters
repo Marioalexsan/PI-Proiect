@@ -8,6 +8,7 @@
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Constants.cpp" />
+    <ClCompile Include="src\Gradient.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -19,5 +20,7 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Constants.hpp" />
+    <ClInclude Include="src\Gradient.hpp" />
+    <ClInclude Include="src\Project_Headers.hpp" />
   </ItemGroup>
 </Project>

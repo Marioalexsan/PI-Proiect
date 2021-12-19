@@ -1,7 +1,6 @@
+#include"Project_Headers.hpp"
 #include "Constants.hpp"
-#include <fstream>
-#include <sstream>
-#include <iostream>
+
 
 namespace pi {
 	const cv::Mat gauss3x3 = cv::Mat_<double>(
@@ -64,4 +63,18 @@ namespace pi {
 
 		return result;
 	}
+
+	const cv::Mat Fx3x3 = cv::Mat_<double>(
+	{
+		3, 0, -3,
+		+10, 0, -10,
+		3, 0, -3
+	}).reshape(0, 3);
+
+	const cv::Mat Fy3x3 = cv::Mat_<double>(
+		{
+			3, 10, 3,
+			0, 0, 0,
+			-3, -10, -3
+		}).reshape(0, 3);
 }
