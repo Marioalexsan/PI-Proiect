@@ -12,15 +12,15 @@ int main(int argc, char** argv) {
 	std::unordered_map<char, cv::Mat> letter_regions;
 	std::unordered_map<char, pi::gradient> letter_regions_grad;
 
-	for (auto& pair : letter_regions) {
-		letter_regions_grad[pair.first] = pi::contour_gradient(letter_regions[pair.first], 0);
+	for (auto& pair : pi::loadLetterRectangles("Resources\\Mittelschrift_regions.txt")) {
+		letter_regions[pair.first] = cv::Mat(font_sample, pair.second);
 	}
 
 	for (auto& pair : letter_regions_grad) {
 		cv::imshow("magnitude " + std::to_string(rand() % 1000), pair.second.magnit);
 		cv::imshow("orientation " + std::to_string(rand() % 1000), pair.second.orient);
 	}
-	
+
 	auto grayscaleStep = [](cv::Mat& input, cv::Mat& output)
 	{
 		cv::cvtColor(input, output, cv::COLOR_BGR2GRAY);
