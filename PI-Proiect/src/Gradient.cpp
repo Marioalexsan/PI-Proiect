@@ -49,10 +49,10 @@ namespace pi {
 		cv::filter2D(image, Sx, -1, pi::Fx3x3);
 		cv::filter2D(image, Sy, -1, pi::Fy3x3);
 
-		cv::convertScaleAbs(Sx, Sx);
-		cv::convertScaleAbs(Sy, Sy);
+		//cv::convertScaleAbs(Sx, Sx);
+		//cv::convertScaleAbs(Sy, Sy);
 
-		cv::addWeighted(Sx, 0.5, Sy, 0.5, 0, out);
+		//cv::addWeighted(Sx, 0.5, Sy, 0.5, 0, out);
 
 		//calculez magnitudinea si orientatia (theta)
 		orientation = calculate_orientation(Sx, Sy);
