@@ -112,7 +112,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)Resources\ $(OutputPath)Resources\  /f /s /e /y</Command>
+      <Command>xcopy "$(SolutionDir)Resources\" "$(OutputPath)Resources\"  /f /s /e /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying resources to path...</Message>
@@ -134,7 +134,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)Resources\ $(OutputPath)Resources\  /f /s /e /y</Command>
+      <Command>xcopy "$(SolutionDir)Resources\" "$(OutputPath)Resources\"  /f /s /e /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying resources to path...</Message>
@@ -154,7 +154,7 @@
       <AdditionalDependencies>opencv_world454d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)Resources\ $(OutputPath)Resources\  /f /s /e /y</Command>
+      <Command>xcopy "$(SolutionDir)Resources\" "$(OutputPath)Resources\"  /f /s /e /y</Command>
     </PostBuildEvent>
     <PostBuildEvent>
       <Message>Copying resources to path...</Message>
@@ -178,7 +178,7 @@
       <AdditionalDependencies>opencv_world454.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>xcopy $(SolutionDir)Resources\ $(OutputPath)Resources\  /f /s /e /y</Command>
+      <Command>xcopy "$(SolutionDir)Resources\" "$(OutputPath)Resources\"  /f /s /e /y</Command>
       <Message>Copying resources to path...</Message>
     </PostBuildEvent>
   </ItemDefinitionGroup>

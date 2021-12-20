@@ -15,4 +15,9 @@ namespace pi {
 	extern const cv::Mat Fx3x3;
 
 	extern const cv::Mat Fy3x3;
+
+	struct gradient{
+		cv::Mat orient;
+		cv::Mat magnit;
+	};
 }

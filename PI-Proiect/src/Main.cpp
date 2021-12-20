@@ -10,11 +10,17 @@ int main(int argc, char** argv) {
 	cv::Mat font_sample = cv::imread("Resources\\Mittelschrift_sample.png", cv::IMREAD_GRAYSCALE);
 
 	std::unordered_map<char, cv::Mat> letter_regions;
+	std::unordered_map<char, pi::gradient> letter_regions_grad;
 
-	for (auto& pair : pi::loadLetterRectangles("Resources\\Mittelschrift_regions.txt")) {
-		letter_regions[pair.first] = cv::Mat(font_sample, pair.second);
+	for (auto& pair : letter_regions) {
+		letter_regions_grad[pair.first] = pi::contour_gradient(letter_regions[pair.first], 0);
 	}
 
+	for (auto& pair : letter_regions_grad) {
+		cv::imshow("magnitude " + std::to_string(rand() % 1000), pair.second.magnit);
+		cv::imshow("orientation " + std::to_string(rand() % 1000), pair.second.orient);
+	}
+	
 	auto grayscaleStep = [](cv::Mat& input, cv::Mat& output)
 	{
 		cv::cvtColor(input, output, cv::COLOR_BGR2GRAY);
@@ -265,8 +271,6 @@ int main(int argc, char** argv) {
 					selected_character = pair.first;
 				}
 			}
-
-			pi::contour_gradient(image, dimension);
 
 			cv::resize(image, image, cv::Size(), 4.f, 4.f, 0);
 			cv::imshow("Letter" + lol, image);
