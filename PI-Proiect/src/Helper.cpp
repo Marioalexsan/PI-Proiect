@@ -433,7 +433,7 @@ namespace pi {
 		return distance;
 	}
 
-	double getLetterDistance(cv::Mat& ref, cv::Mat& smpl) {
+	double getLetterDistance_Old(cv::Mat& ref, cv::Mat& smpl) {
 		if (ref.type() != CV_64F || ref.type() != smpl.type() || ref.size() != smpl.size()) {
 			throw new std::exception("Invalid input matrices!");
 		}
