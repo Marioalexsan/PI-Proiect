@@ -23,4 +23,7 @@
     <ClInclude Include="src\Gradient.hpp" />
     <ClInclude Include="src\Project_Headers.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\letters.txt" />
+  </ItemGroup>
 </Project>

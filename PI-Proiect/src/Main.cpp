@@ -22,10 +22,16 @@ int main(int argc, char** argv) {
 			letter_regions_grad[pair.first] = pi::contour_gradient(letter_regions[pair.first], 0);
 		}
 
+		for (auto& pair : letter_regions_grad)
+		{
+			pi::toFile(pair.second);
+		}
+		
 		for (auto& pair : letter_regions_grad) {
 			cv::imshow("magnitude " + std::to_string(rand() % 1000), pair.second.magnit);
 			cv::imshow("orientation " + std::to_string(rand() % 1000), pair.second.orient);
 		}
+		
 	}
 	catch (cv::Exception& e) {
 		std::cout << "Ligma:" << e.what();

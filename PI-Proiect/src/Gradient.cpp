@@ -1,6 +1,7 @@
 #include"Gradient.hpp"
 
 namespace pi {
+
 	cv::Mat calculate_magnitude(cv::Mat Sx, cv::Mat Sy)
 	{
 		cv::Mat magnitude = cv::Mat(Sx.rows, Sx.cols, CV_64F);
@@ -57,8 +58,8 @@ namespace pi {
 
 		//calculez magnitudinea si orientatia (theta)
 
-		cv::Mat magnitude = calculate_orientation(Sx, Sy);
-		cv::Mat orientation = calculate_magnitude(Sx, Sy);
+		cv::Mat orientation = calculate_orientation(Sx, Sy);
+		cv::Mat magnitude = calculate_magnitude(Sx, Sy);
 		
 		cv::resize(magnitude, magnitude, cv::Size(), 8.0, 8.0, 0);
 		cv::resize(orientation, orientation, cv::Size(), 8.0, 8.0, 0);
@@ -72,6 +73,42 @@ namespace pi {
 		output.orient = orientation;
 
 		return output;
+	}
+
+	/*function that imports the data prom a gradient type to a file*/
+	void toFile(pi::gradient findings)
+	{
+		std::ofstream file;
+		file.open("letters.txt");
+		if (file.is_open()) 
+		{
+			file << "\nMagnitudine: ";
+			for (int index = 0; index <= findings.magnit.rows; ++index)
+			{
+				file << "\n";
+				for (int jindex = 0; jindex <= findings.magnit.cols; ++jindex)
+				{
+					file << findings.magnit.at<double>(index, jindex)<<" ";
+				}
+			}
+
+			file << "\nOrientation: ";
+			for (int index = 0; index <= findings.orient.rows; ++index)
+			{
+				file << "\n";
+				for (int jindex = 0; jindex <= findings.magnit.cols; ++jindex)
+				{
+					file << findings.orient.at<double>(index, jindex) << " ";
+				}
+			}
+
+			file.close();
+		}
+		else
+		{
+			std::cout << "\nUnable to open file letters.txt";
+		}
+
 	}
 }
 

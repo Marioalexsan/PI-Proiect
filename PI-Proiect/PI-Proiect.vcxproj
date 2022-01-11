@@ -30,6 +30,9 @@
     <ClInclude Include="src\Constants.hpp" />
     <ClInclude Include="src\Helper.hpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\letters.txt" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
