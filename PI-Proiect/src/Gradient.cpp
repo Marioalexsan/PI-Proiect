@@ -43,23 +43,22 @@ namespace pi {
 	{
 		cv::Mat out; //ERR: daca rows si cols nu sunt egale
 		//cv::Mat region = cv::Mat::zeros(dimension, dimension, CV_64F);
-		cv::Mat Sx = cv::Mat::zeros(image.rows, image.cols, CV_64F);
-		cv::Mat Sy = cv::Mat::zeros(image.rows, image.cols, CV_64F);
-		cv::Mat magnitude = cv::Mat::zeros(image.rows, image.cols, CV_64F);
-		cv::Mat orientation = cv::Mat::zeros(image.rows, image.cols, CV_64F);
+		cv::Mat Sx;
+		cv::Mat Sy;
 
 		//calculam derivatele in directiile x si y
-		//cv::filter2D(image, Sx, -1, pi::Fx3x3);
-		//cv::filter2D(image, Sy, -1, pi::Fy3x3);
+		cv::filter2D(image, Sx, -1, pi::Fx3x3);
+		cv::filter2D(image, Sy, -1, pi::Fy3x3);
 
-		//cv::convertScaleAbs(Sx, Sx);
-		//cv::convertScaleAbs(Sy, Sy);
+		cv::convertScaleAbs(Sx, Sx);
+		cv::convertScaleAbs(Sy, Sy);
 
-		//cv::addWeighted(Sx, 0.5, Sy, 0.5, 0, out);
+		cv::addWeighted(Sx, 0.5, Sy, 0.5, 0, out);
 
 		//calculez magnitudinea si orientatia (theta)
-		orientation = calculate_orientation(Sx, Sy);
-		magnitude = calculate_magnitude(Sx, Sy);
+
+		cv::Mat magnitude = calculate_orientation(Sx, Sy);
+		cv::Mat orientation = calculate_magnitude(Sx, Sy);
 		
 		cv::resize(magnitude, magnitude, cv::Size(), 8.0, 8.0, 0);
 		cv::resize(orientation, orientation, cv::Size(), 8.0, 8.0, 0);

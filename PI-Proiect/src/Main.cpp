@@ -273,8 +273,9 @@ int main(int argc, char** argv) {
 
 			for (auto& pair : letter_regions) {
 				cv::Mat oldRegion = pi::getRegionFeatures(pair.second, dimension);
-				//double distance = pi::getLetterDistance(oldRegion, region);
 				double newDistance = pi::getMappedDistance(pair.second, image);
+
+				// double otherCriteria = pi::compareMagnitude();
 
 				if (newDistance < lowest_distance) {
 					lowest_distance = newDistance;
