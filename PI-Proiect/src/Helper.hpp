@@ -58,7 +58,7 @@ namespace pi {
 
 	double getMappedDistance(cv::Mat& ref, cv::Mat& smpl);
 
-	double getLetterDistance(cv::Mat& ref, cv::Mat& smpl);
+	double getLetterDistance_Old(cv::Mat& ref, cv::Mat& smpl);
 }
 
 #endif
