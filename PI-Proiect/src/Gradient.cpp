@@ -26,7 +26,7 @@ namespace pi {
 		cv::Mat orientation = cv::Mat(Sx.rows, Sx.cols, CV_16UC1);
 		for (int y = 0; y < Sx.rows; ++y)
 		{
-			for (int x = 1; x < Sx.cols; ++x)
+			for (int x = 0; x < Sx.cols; ++x)
 			{
 				double valX = Sx.at<uchar>(y, x);
 				double valY = Sy.at<uchar>(y, x);
@@ -40,10 +40,12 @@ namespace pi {
 
 	pi::gradient contour_gradient(cv::Mat& image, int dimension)
 	{
-		cv::Mat Sy, Sx, out; //ERR: daca rows si cols nu sunt egale
+		cv::Mat out; //ERR: daca rows si cols nu sunt egale
 		//cv::Mat region = cv::Mat::zeros(dimension, dimension, CV_64F);
-		cv::Mat magnitude = cv::Mat::zeros(image.rows, image.cols, CV_16UC1);
-		cv::Mat orientation = cv::Mat::zeros(image.rows, image.cols, CV_16UC1);
+		cv::Mat Sx = cv::Mat::zeros(image.rows, image.cols, CV_64F);
+		cv::Mat Sy = cv::Mat::zeros(image.rows, image.cols, CV_64F);
+		cv::Mat magnitude = cv::Mat::zeros(image.rows, image.cols, CV_64F);
+		cv::Mat orientation = cv::Mat::zeros(image.rows, image.cols, CV_64F);
 
 		//calculam derivatele in directiile x si y
 		cv::filter2D(image, Sx, -1, pi::Fx3x3);
