@@ -3,7 +3,7 @@
 namespace pi {
 	cv::Mat calculate_magnitude(cv::Mat Sx, cv::Mat Sy)
 	{
-		cv::Mat magnitude = cv::Mat(Sx.rows, Sx.cols, CV_64F);
+		cv::Mat magnitude = cv::Mat(Sx.rows, Sx.cols, CV_16UC1);
 		cv::pow(Sx, 2.0, Sx);
 		cv::pow(Sy, 2.0, Sy);
 
@@ -12,10 +12,10 @@ namespace pi {
 		{
 			for (int x = 0; x < Sx.cols; ++x)
 			{
-				double valX_Sx = Sx.at<double>(y, x);
-				double valY_Sy = Sy.at<double>(y, x);
+				double valX_Sx = Sx.at<uchar>(y, x);
+				double valY_Sy = Sy.at<uchar>(y, x);
 				
-				magnitude.at<double>(y, x) = sqrt(valX_Sx + valY_Sy);
+				magnitude.at<uchar>(y, x) = sqrt(valX_Sx + valY_Sy);
 			}
 		}
 
@@ -23,15 +23,15 @@ namespace pi {
 	}
 	cv::Mat calculate_orientation(cv::Mat Sx, cv::Mat Sy) 
 	{
-		cv::Mat orientation = cv::Mat(Sx.rows, Sx.cols, CV_64F);
+		cv::Mat orientation = cv::Mat(Sx.rows, Sx.cols, CV_16UC1);
 		for (int y = 0; y < Sx.rows; ++y)
 		{
 			for (int x = 1; x < Sx.cols; ++x)
 			{
-				double valX = Sx.at<double>(y, x);
-				double valY = Sy.at<double>(y, x);
+				double valX = Sx.at<uchar>(y, x);
+				double valY = Sy.at<uchar>(y, x);
 				//calculez unghiul theta
-				orientation.at<double>(y, x) = cv::fastAtan2(valX, valY) * (180/CV_PI);
+				orientation.at<uchar>(y, x) = cv::fastAtan2(valX, valY) * (180/CV_PI);
 			}
 		}
 
@@ -42,8 +42,8 @@ namespace pi {
 	{
 		cv::Mat Sy, Sx, out; //ERR: daca rows si cols nu sunt egale
 		//cv::Mat region = cv::Mat::zeros(dimension, dimension, CV_64F);
-		cv::Mat magnitude = cv::Mat::zeros(image.rows, image.cols, CV_64F);
-		cv::Mat orientation = cv::Mat::zeros(image.rows, image.cols, CV_64F);
+		cv::Mat magnitude = cv::Mat::zeros(image.rows, image.cols, CV_16UC1);
+		cv::Mat orientation = cv::Mat::zeros(image.rows, image.cols, CV_16UC1);
 
 		//calculam derivatele in directiile x si y
 		cv::filter2D(image, Sx, -1, pi::Fx3x3);
