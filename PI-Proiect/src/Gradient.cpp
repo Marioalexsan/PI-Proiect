@@ -42,8 +42,7 @@ namespace pi {
 
 	pi::gradient contour_gradient(cv::Mat& image, int dimension)
 	{
-		cv::Mat out; //ERR: daca rows si cols nu sunt egale
-		//cv::Mat region = cv::Mat::zeros(dimension, dimension, CV_64F);
+		cv::Mat out; 
 		cv::Mat Sx;
 		cv::Mat Sy;
 
@@ -83,7 +82,7 @@ namespace pi {
 		if (file.is_open()) 
 		{
 			file << "\nMagnitudine: ";
-			for (int index = 0; index <= findings.magnit.rows; ++index)
+			for (int index = 0; index < findings.magnit.rows; ++index)
 			{
 				file << "\n";
 				for (int jindex = 0; jindex < findings.magnit.cols; ++jindex)
@@ -96,7 +95,7 @@ namespace pi {
 			for (int index = 0; index < findings.orient.rows; ++index)
 			{
 				file << "\n";
-				for (int jindex = 0; jindex <= findings.magnit.cols; ++jindex)
+				for (int jindex = 0; jindex < findings.magnit.cols; ++jindex)
 				{
 					file << findings.orient.at<double>(index, jindex) << " ";
 				}
