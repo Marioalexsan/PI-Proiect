@@ -188,7 +188,7 @@ namespace pi {
 	 *
 	 * \note
 	 */
-	double getMappedDistance(cv::Mat& ref, cv::Mat& smpl);
+	double getMappedDistance(const cv::Mat& ref, const cv::Mat& smpl);
 
 	/**
 	 * \brief

@@ -80,7 +80,7 @@ FontData initialize_font()
 
 	for (auto& pair : fontData.letters)
 	{
-		fontData.letter_gradients[pair.first] = pi::contour_gradient(pair.second, 0);
+		fontData.letter_gradients[pair.first] = pi::contour_gradient(pair.second);
 	}
 
 	return fontData;
@@ -164,7 +164,7 @@ LetterInfo read_letter(const FontData& fontData, const cv::Mat& letter)
 	for (auto& pair : fontData.letters)
 	{
 		auto temp = cv::Mat(letter);
-		auto grad_info = pi::contour_gradient(temp, 0);
+		auto grad_info = pi::contour_gradient(temp);
 
 		double value_distance = powf(1.0f / 255.0f, 2.0f) * pi::getMappedDistance(pair.second, letter);
 
