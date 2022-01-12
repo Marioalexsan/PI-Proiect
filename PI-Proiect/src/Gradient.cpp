@@ -78,22 +78,22 @@ namespace pi {
 	/*function that imports the data prom a gradient type to a file*/
 	void toFile(pi::gradient findings)
 	{
-		std::ofstream file;
-		file.open("letters.txt");
+		std::ofstream file("letters.txt");
+		//file.open("letters.txt");
 		if (file.is_open()) 
 		{
 			file << "\nMagnitudine: ";
 			for (int index = 0; index <= findings.magnit.rows; ++index)
 			{
 				file << "\n";
-				for (int jindex = 0; jindex <= findings.magnit.cols; ++jindex)
+				for (int jindex = 0; jindex < findings.magnit.cols; ++jindex)
 				{
 					file << findings.magnit.at<double>(index, jindex)<<" ";
 				}
 			}
 
 			file << "\nOrientation: ";
-			for (int index = 0; index <= findings.orient.rows; ++index)
+			for (int index = 0; index < findings.orient.rows; ++index)
 			{
 				file << "\n";
 				for (int jindex = 0; jindex <= findings.magnit.cols; ++jindex)
@@ -108,7 +108,6 @@ namespace pi {
 		{
 			std::cout << "\nUnable to open file letters.txt";
 		}
-
 	}
 }
 
