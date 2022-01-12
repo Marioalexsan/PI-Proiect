@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
 	try {
 		for (auto& pair : letter_regions)
 		{
-			letter_regions_grad[pair.first] = pi::contour_gradient(pair.second, 0);
+			letter_regions_grad[pair.first] = pi::contour_gradient(pair.second);
 		}
 
 		//auto it = letter_regions_grad.begin();
@@ -285,7 +285,7 @@ int main(int argc, char** argv) {
 			char selected_final = '?';
 
 			for (auto& pair : letter_regions) {
-				auto gradientInfo = pi::contour_gradient(image, 0);
+				auto gradientInfo = pi::contour_gradient(image);
 
 				double valueDistance = powf(1.0f / 255.0f, 2.0f) * pi::getMappedDistance(pair.second, image);
 

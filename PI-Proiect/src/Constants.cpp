@@ -66,15 +66,15 @@ namespace pi {
 
 	const cv::Mat Fx3x3 = cv::Mat_<double>(
 	{
-		3, 0, -3,
-		+10, 0, -10,
-		3, 0, -3
-	}).reshape(0, 3) / 5.0;
+		-1, 0, 1,
+		-2, 0, 2,
+		-1, 0, 1
+	}).reshape(0, 3) / 2.0;
 
 	const cv::Mat Fy3x3 = cv::Mat_<double>(
 	{
-		3, 10, 3,
+		-1, -2, -1,
 		0, 0, 0,
-		-3, -10, -3
-	}).reshape(0, 3) / 5.0;
+		1, 2, 1
+	}).reshape(0, 3) / 2.0;
 }
