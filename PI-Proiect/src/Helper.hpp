@@ -22,7 +22,7 @@ namespace pi {
 
 		void Clear();
 
-		void Run(cv::Mat& input, cv::Mat& output);
+		void Run(const cv::Mat& input, cv::Mat& output);
 	};
 
 	struct Rectangle {

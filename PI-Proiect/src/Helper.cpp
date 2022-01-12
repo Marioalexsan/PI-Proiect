@@ -6,7 +6,7 @@ namespace pi {
 
 	OperationList::~OperationList() {}
 
-	void OperationList::Run(cv::Mat& input, cv::Mat& output)
+	void OperationList::Run(const cv::Mat& input, cv::Mat& output)
 	{
 		cv::Mat current = input.clone();
 		cv::Mat next;
@@ -408,7 +408,7 @@ namespace pi {
 		return regions;
 	}
 
-	double getMappedDistance(cv::Mat& ref, cv::Mat& smpl)
+	double getMappedDistance(const cv::Mat& ref, const cv::Mat& smpl)
 	{
 		if (ref.type() != smpl.type())
 		{
