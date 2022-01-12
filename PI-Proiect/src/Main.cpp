@@ -19,15 +19,16 @@ int main(int argc, char** argv) {
 	try {
 		for (auto& pair : letter_regions)
 		{
-			letter_regions_grad[pair.first] = pi::contour_gradient(letter_regions[pair.first], 0);
+			letter_regions_grad[pair.first] = pi::contour_gradient(pair.second, 0);
 		}
 
-		auto it = letter_regions_grad.begin();
-		pi::toFile(it->second);
+		//auto it = letter_regions_grad.begin();
+		//pi::toFile(it->second);
 
 		for (auto& pair : letter_regions_grad) {
-			cv::imshow("magnitude " + std::to_string(rand() % 1000), pair.second.magnit);
-			cv::imshow("orientation " + std::to_string(rand() % 1000), pair.second.orient);
+			pi::toFile(pair.second);
+			//cv::imshow("magnitude " + std::to_string(rand() % 1000), pair.second.magnit);
+			//cv::imshow("orientation " + std::to_string(rand() % 1000), pair.second.orient);
 		}
 		
 	}
@@ -269,28 +270,66 @@ int main(int argc, char** argv) {
 
 			cv::Mat region = pi::getRegionFeatures(image, dimension);
 
-			std::cout << std::setprecision(2) << std::fixed;
+			std::cout << std::setprecision(4) << std::fixed;
 
-			double lowest_distance = 2500.0;
-			char selected_character = '?';
+			double lowest_value = 2500.0;
+			char selected_value = '?';
 
+			double lowest_mag = 2500.0;
+			char selected_orient = '?';
+
+			double lowest_orient = 2500.0;
+			char selected_mag = '?';
+
+			double lowest_final = 2500.0;
+			char selected_final = '?';
 
 			for (auto& pair : letter_regions) {
-				cv::Mat oldRegion = pi::getRegionFeatures(pair.second, dimension);
-				double newDistance = pi::getMappedDistance(pair.second, image);
+				auto gradientInfo = pi::contour_gradient(image, 0);
 
-				// double otherCriteria = pi::compareMagnitude();
+				double valueDistance = powf(1.0f / 255.0f, 2.0f) * pi::getMappedDistance(pair.second, image);
 
-				if (newDistance < lowest_distance) {
-					lowest_distance = newDistance;
-					selected_character = pair.first;
+				double magDistance = powf(1.0f / 255.0f, 2.0f) * pi::getMappedDistance(letter_regions_grad[pair.first].magnit, gradientInfo.magnit);
+				double orientDistance = powf(1.0f / 360.0f, 2.0f) * pi::getMappedDistance(letter_regions_grad[pair.first].orient, gradientInfo.orient);
+
+				//std::cout << "Original letter: " << lol << ", target: " << pair.first << std::endl;
+				//std::cout << "Magnitude distance: " << magDistance << std::endl;
+				//std::cout << "Orientation distance: " << orientDistance << std::endl;
+
+				if (valueDistance < lowest_value) {
+					lowest_value = valueDistance;
+					selected_value = pair.first;
+				}
+
+				if (magDistance < lowest_mag)
+				{
+					lowest_mag = magDistance;
+					selected_mag = pair.first;
+				}
+
+				if (orientDistance < lowest_orient)
+				{
+					lowest_orient = orientDistance;
+					selected_orient = pair.first;
+				}
+
+				double finalDistance = valueDistance * 0.6 + magDistance * 0.25 + orientDistance * 0.5;
+
+				if (finalDistance < lowest_final)
+				{
+					lowest_final = finalDistance;
+					selected_final = pair.first;
 				}
 			}
 
 			cv::resize(image, image, cv::Size(), 4.f, 4.f, 0);
 			cv::imshow("Letter" + lol, image);
 
-			std::cout << "Letter " << lol << " is " << selected_character << ", distance: " << lowest_distance << std::endl;
+			std::cout << "Letter " << lol << std::endl;
+			std::cout << "Value distance: " << lowest_value << ", is " << selected_value << std::endl;
+			std::cout << "Mag distance: " << lowest_mag << ", is " << selected_mag << std::endl;
+			std::cout << "Angle distance: " << lowest_orient << ", is " << selected_orient << std::endl;
+			std::cout << "Final distance: " << lowest_final << ", is " << selected_final << std::endl;
 
 			letters.push_back(region);
 		}

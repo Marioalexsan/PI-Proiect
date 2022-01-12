@@ -377,9 +377,22 @@ namespace pi {
 		return regions;
 	}
 
-	double getMappedDistance(cv::Mat& ref, cv::Mat& smpl) {
-		if (ref.type() != CV_8UC1 || ref.type() != smpl.type()) {
-			throw new std::exception("Invalid input matrices!");
+	double getMappedDistance(cv::Mat& ref, cv::Mat& smpl)
+	{
+		if (ref.type() != smpl.type())
+		{
+			throw new std::exception("Matrices must have the same type.");
+		}
+
+		int type_used = ref.type();
+
+		switch (type_used)
+		{
+			case CV_8UC1:
+			case CV_64F:
+				break;
+			default:
+				throw new std::exception("Matrices must either be CV_8UC1 or CV_64F");
 		}
 
 		double distance = 0.0;
@@ -412,7 +425,21 @@ namespace pi {
 		int count = 0;
 
 		while (ref_y < ref_height && smpl_y < smpl_height) {
-			double value = abs(ref.at<uint8_t>((int)ref_y, (int)ref_x) - smpl.at<uint8_t>((int)smpl_y, (int)smpl_x)) / 255.0;
+			double a, b;
+
+			switch (type_used)
+			{
+				case CV_8UC1:
+					a = ref.at<uint8_t>((int)ref_y, (int)ref_x);
+					b = smpl.at<uint8_t>((int)smpl_y, (int)smpl_x);
+					break;
+				case CV_64F:
+					a = ref.at<double>((int)ref_y, (int)ref_x);
+					b = smpl.at<double>((int)smpl_y, (int)smpl_x);
+					break;
+			}
+
+			double value = abs(a - b);
 			distance += value * value;
 			count++;
 
