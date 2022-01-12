@@ -27,6 +27,37 @@ namespace pi {
 		steps.clear();
 	}
 
+	/**************************************************************************************************/
+	/*                                     Public Functions                                          */
+	/**************************************************************************************************/
+
+	std::unordered_map<char, cv::Rect> loadLetterRectangles(std::string path) {
+		std::ifstream file(path);
+
+		if (!file.good()) {
+			std::cout << "Failed to open file " << path << std::endl;
+			return std::unordered_map<char, cv::Rect>();
+		}
+
+		auto result = std::unordered_map<char, cv::Rect>();
+
+		char ch;
+		int x, y, width, height;
+
+		try {
+			while (!file.eof()) {
+				file >> ch >> x >> y >> width >> height;
+				result[ch] = cv::Rect(x, y, width, height);
+			}
+		}
+		catch (...) {
+			std::cout << "Failed to read file " << path << std::endl;
+			return std::unordered_map<char, cv::Rect>();
+		}
+
+		return result;
+	}
+
 	double lineCos(cv::Point a, cv::Point b, cv::Point c) {
 		cv::Point vec_ab = a - b;
 		cv::Point vec_bc = c - b;

@@ -24,3 +24,9 @@
 #include <filesystem>
 #include <iomanip>
 #include <unordered_map>
+
+/****************************
+*      Helper.cpp			*
+*****************************/
+#include <vector>
+#include <opencv2/core.hpp>

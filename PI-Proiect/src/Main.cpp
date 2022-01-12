@@ -61,12 +61,6 @@ int main(int argc, char** argv) {
 		cv::Canny(input, output, 100, 210, 3);
 	};
 
-	auto sharpenStep = [&](cv::Mat& input, cv::Mat& output)
-	{
-		cv::filter2D(input, output, -1, pi::sharpen3x3);
-		cv::add(input, output, output);
-	};
-
 	// Actual processing
 
 	try {
