@@ -123,7 +123,8 @@ PlateData detect_plate(const FontData& fontData, const cv::Mat& sample)
 
 		if (!pi::isLikeARectangle(contours[i]))
 		{
-			color = cv::Scalar(0, 0, 255);
+			//color = cv::Scalar(0, 0, 255);
+			continue;  // Do not show close candidates
 		}
 
 		cv::drawContours(drawing, contours, (int)i, color, 2, cv::LINE_8, cv::noArray(), 0);
@@ -233,47 +234,55 @@ PlateTextData detect_and_read_text(const FontData& fontData, const PlateData& pl
 		// The range of heights for letters is small
 		// However, letters can have varying widths
 
-		std::vector<double> heights;
-		std::vector<double> widths;
+		std::vector<cv::Rect> bboxes;
 
 		for (auto& contour : contours)
 		{
 			auto bbox = pi::getBoundingBox(contour);
 
-			heights.push_back(bbox.height);
-			widths.push_back(bbox.width);
+			bboxes.push_back(bbox);
 		}
 
-		std::sort(heights.begin(), heights.end());
-		std::sort(widths.begin(), widths.end());
+		std::vector<cv::Rect> bbox_wsort = bboxes;
+		std::vector<cv::Rect> bbox_hsort = bboxes;
 
-		int median_index = widths.size() / 2;
-		double median_height = heights[median_index];
-		double median_width = widths[median_index];
+		auto width_less = [](cv::Rect& left, cv::Rect& right) { return left.width < right.width; };
+		auto height_less = [](cv::Rect& left, cv::Rect& right) { return left.height < right.height; };
+
+		std::sort(bbox_hsort.begin(), bbox_hsort.end(), height_less);
+		std::sort(bbox_wsort.begin(), bbox_wsort.end(), width_less);
+
+		int median_index = bbox_hsort.size() / 2;
+		double median_height = bbox_hsort[median_index].height;
+		double median_width = bbox_wsort[median_index].width;
 
 		// std::cout << "Median Width: " << median_width << " | Median Height: " << median_height << std::endl;
 
-		if (widths.size() >= 3)
+		if (bbox_wsort.size() >= 3)
 		{
 			// Use the average of the median and the left / right value
 
-			median_width = (widths[median_index - 1LL] + median_width + widths[median_index + 1LL]) / 3.0;
+			median_width = (bbox_wsort[median_index - 1LL].width + median_width + bbox_wsort[median_index + 1LL].width) / 3.0;
+			median_height = (bbox_hsort[median_index - 1LL].height + median_height + bbox_hsort[median_index + 1LL].height) / 3.0;
 		}
 
+		// TODO: Sort letters based on X / Y components
 
 		double width_threshold = 0.75;
 		double height_threshold = 0.1;
 
-		for (int i = 0; i < contours.size(); i++)
-		{
-			auto bbox = pi::getBoundingBox(contours[i]);
+		// The height for a font varies by a low amount
+		// Meanwhile the width can vary by a high amount
+		// Therefore, drop all contours that vary:
+		// * by >10% for height, or
+		// * by >75% for width
+		// Those are unlikely to be letters
 
-			// The height for a font varies by a low amount
-			// Meanwhile the width can vary by a high amount
-			// Therefore, drop all contours that vary:
-			// * by >10% for height, or
-			// * by >75% for width
-			// Those are unlikely to be letters
+		// Remove letters based on criteria above
+
+		for (int i = 0; i < bboxes.size(); i++)
+		{
+			auto bbox = bboxes[i];
 
 			double width_variance = abs(bbox.width - median_width) / median_width;
 			double height_variance = abs(bbox.height - median_height) / median_height;
@@ -283,11 +292,28 @@ PlateTextData detect_and_read_text(const FontData& fontData, const PlateData& pl
 				height_variance > height_threshold;
 
 			if (not_a_letter)
-				continue;
+			{
+				bboxes.erase(bboxes.begin() + i);
+				i--;
+			}
+		}
 
-			auto letter_rect = cv::Rect(bbox.x, bbox.y, bbox.width, bbox.height);
+		// Sort letters so that they appear in word order
 
-			cv::Mat unknown_letter = cv::Mat(plate, letter_rect);
+		auto letter_less = [](cv::Rect& left, cv::Rect& right) 
+		{ 
+			return left.x < right.x || left.x <= right.x && left.y < right.y;
+		};
+
+		std::sort(bboxes.begin(), bboxes.end(), letter_less);
+
+		// Prepare results
+
+		for (int i = 0; i < bboxes.size(); i++)
+		{
+			auto bbox = bboxes[i];
+
+			cv::Mat unknown_letter = cv::Mat(plate, bbox);
 			cv::cvtColor(unknown_letter, unknown_letter, cv::COLOR_BGR2GRAY);
 
 			LetterInfo letterInfo = read_letter(fontData, unknown_letter);
@@ -351,7 +377,7 @@ int main(int argc, char** argv) {
 
 		for (int i = 0; i < plateTextData.plate_letters.size(); i++)
 		{
-			std::cout << " === Plate " << i << " ===" << std::endl;
+			std::cout << " ================== Plate " << i << " ================== " << std::endl;
 
 			cv::imshow(std::string("Plate ") + std::to_string(i), plateData.segmented_plates[i]);
 
@@ -361,7 +387,7 @@ int main(int argc, char** argv) {
 			{
 				auto& letterInfo = letterList[j];
 
-				std::cout << " => Letter " << j << std::endl;
+				std::cout << " ====> Character " << j << std::endl;
 				std::cout << "Letter: " << letterInfo.letter << std::endl;
 				std::cout << "Distance: " << letterInfo.distance << std::endl;
 

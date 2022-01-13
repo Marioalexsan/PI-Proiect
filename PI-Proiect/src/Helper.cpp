@@ -238,7 +238,7 @@ namespace pi {
 		}
 	}
 
-	Rectangle getBoundingBox(std::vector<cv::Point>& points) {
+	cv::Rect getBoundingBox(std::vector<cv::Point>& points) {
 		int x_min = points[0].x;
 		int x_max = x_min;
 		int y_min = points[0].y;
@@ -251,7 +251,7 @@ namespace pi {
 			y_max = std::max(y_max, points[i].y);
 		}
 
-		Rectangle rect;
+		cv::Rect rect;
 
 		rect.x = x_min;
 		rect.y = y_min;

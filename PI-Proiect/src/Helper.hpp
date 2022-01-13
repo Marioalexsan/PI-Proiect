@@ -25,13 +25,6 @@ namespace pi {
 		void Run(const cv::Mat& input, cv::Mat& output);
 	};
 
-	struct Rectangle {
-		int x;
-		int y;
-		int width;
-		int height;
-	};
-
 	/**************************************************************************************************/
 	/*                                     Public Functions                                          */
 	/**************************************************************************************************/
@@ -155,7 +148,7 @@ namespace pi {
 	 *
 	 * \note
 	 */
-	Rectangle getBoundingBox(std::vector<cv::Point>& points);
+	cv::Rect getBoundingBox(std::vector<cv::Point>& points);
 
 	/**
 	 * \brief
