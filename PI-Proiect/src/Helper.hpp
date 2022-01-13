@@ -71,7 +71,7 @@ namespace pi {
 	 *
 	 * \note
 	 */
-	bool isLikeARectangle(const std::vector<cv::Point>& points);
+	bool isLikeALicensePlate(const std::vector<cv::Point>& points);
 
 	/**
 	 * \brief
@@ -126,7 +126,7 @@ namespace pi {
 	 *
 	 * \note
 	 */
-	void simplifyContours(std::vector<std::vector<cv::Point>>& target);
+	void simplifyContours(std::vector<std::vector<cv::Point>>& target, bool doLength = true);
 
 	/**
 	 * \brief
@@ -137,7 +137,7 @@ namespace pi {
 	 *
 	 * \note
 	 */
-	void applyContrast(cv::Mat& img, float a, float b, float sa, float sb);
+	void applyContrast(cv::Mat& img, cv::Mat& output, float a, float b, float sa, float sb);
 
 	/**
 	 * \brief
@@ -181,7 +181,7 @@ namespace pi {
 	 *
 	 * \note
 	 */
-	double getMappedDistance(const cv::Mat& ref, const cv::Mat& smpl);
+	double getImageDistance(const cv::Mat& ref, const cv::Mat& smpl);
 
 	/**
 	 * \brief

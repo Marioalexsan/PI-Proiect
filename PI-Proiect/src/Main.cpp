@@ -6,6 +6,12 @@
 
 const int dimension = 7;
 
+void debug_image(const cv::Mat& image, const std::string& note)
+{
+	static int debug_var = 0;
+	cv::imshow("Debug: " + std::to_string(debug_var++) + " | " + note, image);
+}
+
 void apply_grayscale(cv::Mat& input, cv::Mat& output)
 {
 	cv::cvtColor(input, output, cv::COLOR_BGR2GRAY);
@@ -29,6 +35,11 @@ void apply_equalize(cv::Mat& input, cv::Mat& output)
 void apply_canny(cv::Mat& input, cv::Mat& output)
 {
 	cv::Canny(input, output, 100, 210, 3);
+}
+
+void apply_contrast(cv::Mat& input, cv::Mat& output)
+{
+	pi::applyContrast(input, output, 50, 150, 20, 150);
 }
 
 struct FontData
@@ -100,6 +111,9 @@ PlateData detect_plate(const FontData& fontData, const cv::Mat& sample)
 
 	process.Run(sample, result);
 
+	//debug_image(result, "Plate");
+	//apply_canny(result, result);
+
 	// Find contours using OpenCV
 
 	std::vector<std::vector<cv::Point>> contours;
@@ -121,7 +135,7 @@ PlateData detect_plate(const FontData& fontData, const cv::Mat& sample)
 	{
 		cv::Scalar color = cv::Scalar(0, 255, 0);
 
-		if (!pi::isLikeARectangle(contours[i]))
+		if (!pi::isLikeALicensePlate(contours[i]))
 		{
 			//color = cv::Scalar(0, 0, 255);
 			continue;  // Do not show close candidates
@@ -144,7 +158,7 @@ PlateData detect_plate(const FontData& fontData, const cv::Mat& sample)
 
 	for (int i = 0; i < contours.size(); i++)
 	{
-		if (pi::isLikeARectangle(contours[i]))
+		if (pi::isLikeALicensePlate(contours[i]))
 		{
 			auto rect = pi::getBoundingBox(contours[i]);
 
@@ -167,10 +181,10 @@ LetterInfo read_letter(const FontData& fontData, const cv::Mat& letter)
 		auto temp = cv::Mat(letter);
 		auto grad_info = pi::contour_gradient(temp);
 
-		double value_distance = powf(1.0f / 255.0f, 2.0f) * pi::getMappedDistance(pair.second, letter);
+		double value_distance = powf(1.0f / 255.0f, 2.0f) * pi::getImageDistance(pair.second, letter);
 
-		double mag_distance = powf(1.0f / 255.0f, 2.0f) * pi::getMappedDistance(fontData.letter_gradients.at(pair.first).magnit, grad_info.magnit);
-		double angle_distance = powf(1.0f / 360.0f, 2.0f) * pi::getMappedDistance(fontData.letter_gradients.at(pair.first).orient, grad_info.orient);
+		double mag_distance = powf(1.0f / 255.0f, 2.0f) * pi::getImageDistance(fontData.letter_gradients.at(pair.first).magnit, grad_info.magnit);
+		double angle_distance = powf(1.0f / 360.0f, 2.0f) * pi::getImageDistance(fontData.letter_gradients.at(pair.first).orient, grad_info.orient);
 
 		double finalDistance = value_distance * 0.6 + mag_distance * 0.25 + angle_distance * 0.5;
 
@@ -225,10 +239,23 @@ PlateTextData detect_and_read_text(const FontData& fontData, const PlateData& pl
 
 		cv::findContours(result, contours, hierarchy, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
+		cv::Mat drawing = plate.clone();
+		cv::RNG rng(12345);
+
+		for (size_t i = 0; i < contours.size(); i++)
+		{
+			cv::Scalar color = cv::Scalar(0, 255, 0);
+
+			cv::drawContours(drawing, contours, (int)i, color, 2, cv::LINE_8, cv::noArray(), 0);
+
+		}
+
+		debug_image(drawing, "Plate crap");
+
 		// Simplify contours - multiple straight (or almost straight) lines become a single line
 
-		// pi::simplifyContours(contours); // - Can't do due to sensitive algorithm!
-		pi::pruneShort(contours, 20);
+		pi::simplifyContours(contours, false); // - Can't do due to sensitive algorithm!
+		pi::pruneShort(contours, 15);
 
 		// Calculate median height and width
 		// The range of heights for letters is small
@@ -373,11 +400,14 @@ int main(int argc, char** argv) {
 
 		std::cout << "Plates detected: " << plateTextData.plate_letters.size() << std::endl;
 
+		cv::resize(plateData.plate_drawing, plateData.plate_drawing, cv::Size(), 0.8, 0.8);
 		cv::imshow("Plate detection", plateData.plate_drawing);
+
+		std::cout << std::endl;
 
 		for (int i = 0; i < plateTextData.plate_letters.size(); i++)
 		{
-			std::cout << " ================== Plate " << i << " ================== " << std::endl;
+			std::cout << "================== Plate " << i << " ================== " << std::endl << std::endl;
 
 			cv::imshow(std::string("Plate ") + std::to_string(i), plateData.segmented_plates[i]);
 
@@ -387,18 +417,12 @@ int main(int argc, char** argv) {
 			{
 				auto& letterInfo = letterList[j];
 
-				std::cout << " ====> Character " << j << std::endl;
-				std::cout << "Letter: " << letterInfo.letter << std::endl;
-				std::cout << "Distance: " << letterInfo.distance << std::endl;
+				std::cout << "====> Character " << j << std::endl;
 
-				std::cout << "Value Letter: " << letterInfo.value_letter << std::endl;
-				std::cout << "Value Distance: " << letterInfo.value_distance << std::endl;
-
-				std::cout << "Mag Letter: " << letterInfo.mag_letter << std::endl;
-				std::cout << "Mag Distance: " << letterInfo.mag_distance << std::endl;
-
-				std::cout << "Angle Letter: " << letterInfo.angle_letter << std::endl;
-				std::cout << "Angle Distance: " << letterInfo.angle_distance << std::endl;
+				std::cout << "Value (best): " << letterInfo.value_letter << " = " << letterInfo.value_distance << std::endl;
+				std::cout << "Magnitude: " << letterInfo.mag_letter << " = " << letterInfo.mag_distance << std::endl;
+				std::cout << "Angle: " << letterInfo.angle_letter << " = " << letterInfo.angle_distance << std::endl;
+				std::cout << std::endl;
 
 				cv::Mat letter_display;
 				cv::resize(letterInfo.unknown_letter, letter_display, cv::Size(), 6.0, 6.0, 0);

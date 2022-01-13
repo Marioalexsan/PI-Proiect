@@ -76,13 +76,14 @@ namespace pi {
 		return perimeter;
 	}
 
-	bool isLikeARectangle(const std::vector<cv::Point>& points) {
+	bool isLikeALicensePlate(const std::vector<cv::Point>& points) {
 		// Rectangle criteria:
 		// - Opposing edges must be almost parallel
 		// - Adjacent edges must be aproximately 90 degrees apart
 
-		if (points.size() != 4) {
-			return false;
+		if (points.size() != 4)
+		{
+			return false;  // Can't be a rectangle to begin with
 		}
 
 		cv::Point a = points[0];
@@ -90,7 +91,7 @@ namespace pi {
 		cv::Point c = points[2];
 		cv::Point d = points[3];
 
-		const double thresh = 0.12;
+		const double thresh = 0.22;
 
 		bool bad_angles =
 			abs(lineCos(a, b, c)) > thresh ||
@@ -98,7 +99,40 @@ namespace pi {
 			abs(lineCos(c, d, a)) > thresh ||
 			abs(lineCos(d, a, b)) > thresh;
 
-		return !bad_angles;
+		if (bad_angles)
+		{
+			return false;
+		}
+
+		// Do one final check that will throw out many crappy candidates
+		// Proportions for a license plate:
+		// Width: 400 units, Height: 90 units
+		// We'll throw out any rectangles that aren't close to a 40/9 ratio
+
+		// We know it's a rectangle, so we just need adjancent edges
+
+		double target_ratio = 40.0 / 9.0;
+
+		double ratio_higher = 0.35;  // Allow up to x% higher (relative) ratio - plate is longer in one direction
+		double ratio_lower = -0.25;  // Allow up to x% lower (relative) ratio - plate is closer to a square
+
+		cv::Point ab = b - a;
+		cv::Point bc = c - b;
+
+		double ab_len = sqrt(ab.ddot(ab));
+		double bc_len = sqrt(bc.ddot(bc));
+
+		double ratio = ab_len / bc_len;
+		double reverse_ratio = bc_len / ab_len;
+
+		double percentage = (ratio - target_ratio) / target_ratio;
+		double reverse_percentage = (reverse_ratio - target_ratio) / target_ratio;
+
+		bool good_ratio =
+			(ratio_higher >= percentage && percentage >= ratio_lower) ||
+			(ratio_higher >= reverse_percentage && reverse_percentage >= ratio_lower);
+
+		return good_ratio;
 	}
 
 	double getColorMatch(cv::Mat& img, cv::Scalar color) {
@@ -151,7 +185,7 @@ namespace pi {
 		// Prune shapes that don't approximate a rectangle
 
 		for (int cindex = 0; cindex < target.size(); cindex++) {
-			if (!isLikeARectangle(target[cindex])) {
+			if (!isLikeALicensePlate(target[cindex])) {
 				target.erase(target.begin() + cindex);
 				cindex -= 1;
 			}
@@ -176,7 +210,7 @@ namespace pi {
 		}
 	}
 
-	void simplifyContours(std::vector<std::vector<cv::Point>>& target) {
+	void simplifyContours_old(std::vector<std::vector<cv::Point>>& target) {
 		int passes = 16;
 		double start_threshold = 0.98;
 		double relax_per_pass = 0.26 / passes;
@@ -209,8 +243,134 @@ namespace pi {
 		}
 	}
 
-	void applyContrast(cv::Mat& img, float a, float b, float sa, float sb) {
-		if (img.type() != CV_8UC1) {
+	void simplifyContours(std::vector<std::vector<cv::Point>>& target, bool doLength)
+	{
+		int passes = 16;
+		double cos_thresh_base = 0.98;
+		double relax_per_pass = 0.2 / passes;
+
+		for (int pass = 0; pass < passes; pass++)
+		{
+			for (int cindex = 0; cindex < target.size(); cindex++)
+			{
+				std::vector<cv::Point>& contour = target[cindex];
+
+				// Step 1: Collapse small edges into a point
+
+				if (doLength)
+				{
+					for (uint64_t point = 0; point < contour.size() && contour.size() > 2; point++)
+					{
+						uint64_t index_a = point;
+						uint64_t index_b = (point + 1) % contour.size();
+
+						cv::Point a = contour[index_a];
+						cv::Point b = contour[index_b];
+						cv::Point ab = b - a;
+
+						cv::Point ab_mid = a + (b - a) / 2;
+						double ab_len2 = ab.ddot(ab);
+
+						double len2_thresh = pow(5.0, 2.0);
+
+						if (ab_len2 <= len2_thresh)
+						{
+							contour[index_b] = ab_mid;
+							contour.erase(contour.begin() + index_a);
+							continue;
+						}
+					}
+				}
+
+				if (contour.size() <= 2)
+				{
+					continue;
+				}
+
+				// Step 2: Collapse multiple edges that are relatively aligned into one
+
+				for (uint64_t pindex = 0; pindex < contour.size(); pindex++)
+				{
+					uint64_t index_a = pindex;
+					uint64_t index_b = (pindex + 1) % contour.size();
+					uint64_t index_c = (pindex + 2) % contour.size();
+					uint64_t index_d = (pindex + 3) % contour.size();
+
+
+					cv::Point a = contour[index_a];
+					cv::Point b = contour[index_b];
+					cv::Point c = contour[index_c];
+					cv::Point d = contour[index_d];
+
+					cv::Point ab_mid = a + (b - a) / 2;
+					cv::Point bc_mid = b + (c - b) / 2;
+					cv::Point cd_mid = c + (d - c) / 2;
+
+					double abc_cos = lineCos(a, b, c);
+					double bcd_cos = lineCos(b, c, d);
+
+					double cos_thresh = cos_thresh_base - relax_per_pass * pass;
+
+					// cos >= cos_thresh (approaching 1) means we have an (almost) straight line (180 degrees)
+					// Therefore, we can erase the mid point outright
+
+					if (abs(abc_cos) >= cos_thresh)
+					{
+						contour.erase(contour.begin() + index_b);
+						pindex -= 1;
+						continue;
+					}
+
+					if (abs(bcd_cos) >= cos_thresh)
+					{
+						contour.erase(contour.begin() + index_c);
+						pindex -= 1;
+						continue;
+					}
+
+					// Let's try using all four points
+					// Conditions are the same, except the cos threshold is lowered
+					// We'll replace segment b-c with its midpoint if both angles are closer to 180 degrees
+
+					cos_thresh *= 0.9;
+
+					if (abs(bcd_cos) >= cos_thresh && abs(abc_cos) >= cos_thresh)
+					{
+						contour[index_c] = bc_mid;
+						contour.erase(contour.begin() + index_b);
+						pindex -= 1;
+						continue;
+					}
+
+					// One final attempt: simplify segment b-c is it's much smaller than the neighboring segments
+
+					if (doLength)
+					{
+						cv::Point ab = b - a;
+						cv::Point bc = c - b;
+						cv::Point cd = d - c;
+
+						double ab_len = sqrt(ab.ddot(ab));
+						double bc_len = sqrt(bc.ddot(bc));
+						double cd_len = sqrt(cd.ddot(cd));
+
+						double ratio_thresh = 7.0;
+
+						if (ab_len / bc_len >= ratio_thresh && cd_len / bc_len >= ratio_thresh)
+						{
+							contour[index_c] = bc_mid;
+							contour.erase(contour.begin() + index_b);
+							pindex -= 1;
+							continue;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void applyContrast(cv::Mat& input, cv::Mat& output, float a, float b, float sa, float sb) {
+		if (input.type() != CV_8UC1) {
 			return;
 		}
 
@@ -218,10 +378,10 @@ namespace pi {
 		float n = (sb - sa) / (float)a;
 		float p = (255 - sb) / (255 - b);
 
-		for (int y = 0; y < img.cols; y++) {
-			for (int x = 0; x < img.rows; x++) {
+		for (int y = 0; y < input.cols; y++) {
+			for (int x = 0; x < input.rows; x++) {
 
-				uint8_t r = img.at<uint8_t>(x, y);
+				uint8_t r = input.at<uint8_t>(x, y);
 
 				if (r <= a) {
 					r = (uint8_t)std::min((int)(m * r), 255);
@@ -233,7 +393,7 @@ namespace pi {
 					r = (uint8_t)std::min((int)(p * (r - b) + sb), 255);
 				}
 
-				img.at<uint8_t>(x, y) = r;
+				output.at<uint8_t>(x, y) = r;
 			}
 		}
 	}
@@ -408,7 +568,7 @@ namespace pi {
 		return regions;
 	}
 
-	double getMappedDistance(const cv::Mat& ref, const cv::Mat& smpl)
+	double getImageDistance(const cv::Mat& ref, const cv::Mat& smpl)
 	{
 		if (ref.type() != smpl.type())
 		{
