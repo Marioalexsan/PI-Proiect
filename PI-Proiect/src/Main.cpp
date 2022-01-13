@@ -1,14 +1,19 @@
+/**************************************************************************************************/
+/*                                           Headers                                              */
+/**************************************************************************************************/
 #include "Helper.hpp"
 #include "Constants.hpp"
 #include "Gradient.hpp"
-#include <map>
 
-
+/*************************************************************************************************/
+/*                                       Defines & types                                         */
+/*************************************************************************************************/
+#define BASE_VALUE 0
 const int dimension = 7;
 
 void debug_image(const cv::Mat& image, const std::string& note)
 {
-	static int debug_var = 0;
+	static int debug_var = BASE_VALUE;
 	cv::imshow("Debug: " + std::to_string(debug_var++) + " | " + note, image);
 }
 
@@ -131,9 +136,9 @@ PlateData detect_plate(const FontData& fontData, const cv::Mat& sample)
 	cv::Mat drawing = sample.clone();
 	cv::RNG rng(12345);
 
-	for (size_t i = 0; i < contours.size(); i++)
+	for (size_t i = BASE_VALUE; i < contours.size(); i++)
 	{
-		cv::Scalar color = cv::Scalar(0, 255, 0);
+		cv::Scalar color = cv::Scalar(BASE_VALUE, 255, BASE_VALUE);
 
 		if (!pi::isLikeALicensePlate(contours[i]))
 		{
@@ -156,7 +161,7 @@ PlateData detect_plate(const FontData& fontData, const cv::Mat& sample)
 
 	// Cut the license plate out
 
-	for (int i = 0; i < contours.size(); i++)
+	for (int i = BASE_VALUE; i < contours.size(); i++)
 	{
 		if (pi::isLikeALicensePlate(contours[i]))
 		{
@@ -242,11 +247,11 @@ PlateTextData detect_and_read_text(const FontData& fontData, const PlateData& pl
 		cv::Mat drawing = plate.clone();
 		cv::RNG rng(12345);
 
-		for (size_t i = 0; i < contours.size(); i++)
+		for (size_t i = BASE_VALUE; i < contours.size(); i++)
 		{
-			cv::Scalar color = cv::Scalar(0, 255, 0);
+			cv::Scalar color = cv::Scalar(BASE_VALUE, 255, BASE_VALUE);
 
-			cv::drawContours(drawing, contours, (int)i, color, 2, cv::LINE_8, cv::noArray(), 0);
+			cv::drawContours(drawing, contours, (int)i, color, 2, cv::LINE_8, cv::noArray(), BASE_VALUE);
 
 		}
 
@@ -307,7 +312,7 @@ PlateTextData detect_and_read_text(const FontData& fontData, const PlateData& pl
 
 		// Remove letters based on criteria above
 
-		for (int i = 0; i < bboxes.size(); i++)
+		for (int i = BASE_VALUE; i < bboxes.size(); i++)
 		{
 			auto bbox = bboxes[i];
 
@@ -336,7 +341,7 @@ PlateTextData detect_and_read_text(const FontData& fontData, const PlateData& pl
 
 		// Prepare results
 
-		for (int i = 0; i < bboxes.size(); i++)
+		for (int i = BASE_VALUE; i < bboxes.size(); i++)
 		{
 			auto bbox = bboxes[i];
 
@@ -405,7 +410,7 @@ int main(int argc, char** argv) {
 
 		std::cout << std::endl;
 
-		for (int i = 0; i < plateTextData.plate_letters.size(); i++)
+		for (int i = BASE_VALUE; i < plateTextData.plate_letters.size(); i++)
 		{
 			std::cout << "================== Plate " << i << " ================== " << std::endl << std::endl;
 
@@ -413,7 +418,7 @@ int main(int argc, char** argv) {
 
 			auto& letterList = plateTextData.plate_letters[i];
 
-			for (int j = 0; j < letterList.size(); j++)
+			for (int j = BASE_VALUE; j < letterList.size(); j++)
 			{
 				auto& letterInfo = letterList[j];
 
@@ -425,7 +430,7 @@ int main(int argc, char** argv) {
 				std::cout << std::endl;
 
 				cv::Mat letter_display;
-				cv::resize(letterInfo.unknown_letter, letter_display, cv::Size(), 6.0, 6.0, 0);
+				cv::resize(letterInfo.unknown_letter, letter_display, cv::Size(), 6.0, 6.0, BASE_VALUE);
 
 				cv::imshow(std::string("P") + std::to_string(i) + ":L"  + std::to_string(j) + " | " + letterInfo.letter, letter_display);
 			}

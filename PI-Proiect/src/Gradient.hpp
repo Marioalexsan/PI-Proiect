@@ -52,8 +52,6 @@ namespace pi {
 	 * \brief Function that calculates the gradient of an image
 	 *
 	 * \param[in] image - received image/ region of the image
-	 * 
-	 * \param[in] dimension - 
 	 *
 	 * \note First we do some helpings, before the calculus
 	 */

@@ -1,3 +1,6 @@
+/**************************************************************************************************/
+/*                                           Headers                                              */
+/**************************************************************************************************/
 #include "Helper.hpp"
 
 namespace pi {
@@ -66,7 +69,7 @@ namespace pi {
 	}
 
 	double contourPerimeter(const std::vector<cv::Point>& points) {
-		double perimeter = 0;
+		double perimeter = BASE_VALUE;
 
 		for (uint64_t i = 0; i < points.size(); i++) {
 			cv::Point dist = points[(i + 1) % points.size()] - points[i];
@@ -86,7 +89,7 @@ namespace pi {
 			return false;  // Can't be a rectangle to begin with
 		}
 
-		cv::Point a = points[0];
+		cv::Point a = points[BASE_VALUE];
 		cv::Point b = points[1];
 		cv::Point c = points[2];
 		cv::Point d = points[3];
@@ -136,7 +139,7 @@ namespace pi {
 	}
 
 	double getColorMatch(cv::Mat& img, cv::Scalar color) {
-		int baseb = (int)color[0];
+		int baseb = (int)color[BASE_VALUE];
 		int baseg = (int)color[1];
 		int baser = (int)color[2];
 
@@ -146,11 +149,11 @@ namespace pi {
 			throw std::exception("Oh Shiet");
 		}
 
-		int matchingCount = 0;
-		int total = 0;
+		int matchingCount = BASE_VALUE;
+		int total = BASE_VALUE;
 		uint8_t* ptr = img.data;
-		for (int j = 0; j < img.rows; j++) {
-			for (int i = 0; i < img.cols; i++) {
+		for (int j = BASE_VALUE; j < img.rows; j++) {
+			for (int i = BASE_VALUE; i < img.cols; i++) {
 				int b = ptr[(img.cols * j + i) * img.channels()];
 				int g = ptr[(img.cols * j + i) * img.channels() + 1];
 				int r = ptr[(img.cols * j + i) * img.channels() + 2];
@@ -175,7 +178,7 @@ namespace pi {
 
 		// Prune contours that have an edge count other than 4
 
-		for (int cindex = 0; cindex < target.size(); cindex++) {
+		for (int cindex = BASE_VALUE; cindex < target.size(); cindex++) {
 			if (target[cindex].size() != 4) {
 				target.erase(target.begin() + cindex);
 				cindex -= 1;
@@ -184,7 +187,7 @@ namespace pi {
 
 		// Prune shapes that don't approximate a rectangle
 
-		for (int cindex = 0; cindex < target.size(); cindex++) {
+		for (int cindex = BASE_VALUE; cindex < target.size(); cindex++) {
 			if (!isLikeALicensePlate(target[cindex])) {
 				target.erase(target.begin() + cindex);
 				cindex -= 1;
@@ -193,7 +196,7 @@ namespace pi {
 	}
 
 	void pruneEmpty(std::vector<std::vector<cv::Point>>& target) {
-		for (int cindex = 0; cindex < target.size(); cindex++) {
+		for (int cindex = BASE_VALUE; cindex < target.size(); cindex++) {
 			if (target[cindex].size() < 2) {
 				target.erase(target.begin() + cindex);
 				cindex -= 1;
@@ -202,7 +205,7 @@ namespace pi {
 	}
 
 	void pruneShort(std::vector<std::vector<cv::Point>>& target, double threshold) {
-		for (int cindex = 0; cindex < target.size(); cindex++) {
+		for (int cindex = BASE_VALUE; cindex < target.size(); cindex++) {
 			if (pi::contourPerimeter(target[cindex]) < threshold) {
 				target.erase(target.begin() + cindex);
 				cindex -= 1;
@@ -215,14 +218,14 @@ namespace pi {
 		double start_threshold = 0.98;
 		double relax_per_pass = 0.26 / passes;
 
-		for (int pass = 0; pass < passes; pass++) {
-			for (int cindex = 0; cindex < target.size(); cindex++) {
+		for (int pass = BASE_VALUE; pass < passes; pass++) {
+			for (int cindex = BASE_VALUE; cindex < target.size(); cindex++) {
 
 				if (target[cindex].size() <= 2) {
 					continue;
 				}
 
-				for (uint64_t pindex = 0; pindex < target[cindex].size(); pindex++) {
+				for (uint64_t pindex = BASE_VALUE; pindex < target[cindex].size(); pindex++) {
 					std::vector<cv::Point>& contour = target[cindex];
 
 					cv::Point a = contour[pindex];
@@ -378,8 +381,8 @@ namespace pi {
 		float n = (sb - sa) / (float)a;
 		float p = (255 - sb) / (255 - b);
 
-		for (int y = 0; y < input.cols; y++) {
-			for (int x = 0; x < input.rows; x++) {
+		for (int y = BASE_VALUE; y < input.cols; y++) {
+			for (int x = BASE_VALUE; x < input.rows; x++) {
 
 				uint8_t r = input.at<uint8_t>(x, y);
 
@@ -399,9 +402,9 @@ namespace pi {
 	}
 
 	cv::Rect getBoundingBox(std::vector<cv::Point>& points) {
-		int x_min = points[0].x;
+		int x_min = points[BASE_VALUE].x;
 		int x_max = x_min;
-		int y_min = points[0].y;
+		int y_min = points[BASE_VALUE].y;
 		int y_max = y_min;
 
 		for (int i = 1; i < points.size(); i++) {
@@ -436,19 +439,19 @@ namespace pi {
 		std::vector<bool> markers((uint64_t)input.rows * input.cols);
 
 		bool repeat = true;
-		int black_neighbours = 0;
-		int white_black_transitions = 0;
-		int a_count = 0;
+		int black_neighbours = BASE_VALUE;
+		int white_black_transitions = BASE_VALUE;
+		int a_count = BASE_VALUE;
 
-		uint8_t region[9] = { 0 };
+		uint8_t region[9] = { BASE_VALUE };
 
-		for (int x = 0; x < output.cols; x++) {
-			output.at<uint8_t>(0, x) = 255;
+		for (int x = BASE_VALUE; x < output.cols; x++) {
+			output.at<uint8_t>(BASE_VALUE, x) = 255;
 			output.at<uint8_t>(output.rows - 1, x) = 255;
 		}
 
-		for (int y = 0; y < output.rows; y++) {
-			output.at<uint8_t>(y, 0) = 255;
+		for (int y = BASE_VALUE; y < output.rows; y++) {
+			output.at<uint8_t>(y, BASE_VALUE) = 255;
 			output.at<uint8_t>(y, output.cols - 1) = 255;
 		}
 
@@ -456,29 +459,29 @@ namespace pi {
 
 		for (int y = 1; y < output.rows - 1; y++) {
 			for (int x = 1; x < output.cols - 1; x++) {
-				uint8_t& value = output.at<uint8_t>(y, 0);
+				uint8_t& value = output.at<uint8_t>(y, BASE_VALUE);
 
-				value = value >= threshold ? 255 : 0;
+				value = value >= threshold ? 255 : BASE_VALUE;
 			}
 		}
 
 		while (repeat) {
 			repeat = false;
-			white_black_transitions = 0;
+			white_black_transitions = BASE_VALUE;
 
-			for (int i = 0; i < markers.size(); i++) {
+			for (int i = BASE_VALUE; i < markers.size(); i++) {
 				markers[i] = false;
 			}
 
-			for (int step = 0; step <= 1; step++) {
+			for (int step = BASE_VALUE; step <= 1; step++) {
 				// Two steps must be done.
 				// The only differenece between them 
 
 				for (int y = 1; y < output.rows - 1; y++) {
 					for (int x = 1; x < output.cols - 1; x++) {
-						region[0] = output.at<uint8_t>(y, x);
+						region[BASE_VALUE] = output.at<uint8_t>(y, x);
 
-						if (region[0] == 255) {
+						if (region[BASE_VALUE] == 255) {
 							continue;
 						}
 
@@ -496,11 +499,11 @@ namespace pi {
 						region[7] = output.at<uint8_t>(y, x - 1);
 						region[8] = output.at<uint8_t>(y - 1, x - 1);
 
-						black_neighbours = 0;
-						white_black_transitions = 0;
+						black_neighbours = BASE_VALUE;
+						white_black_transitions = BASE_VALUE;
 
 						for (int i = 1; i <= 8; i++) {
-							if (region[i] == 0) {
+							if (region[i] == BASE_VALUE) {
 								black_neighbours++;
 							}
 
@@ -510,7 +513,7 @@ namespace pi {
 							}
 						}
 
-						if (step == 0) {
+						if (step == BASE_VALUE) {
 							markers[x + (uint64_t) y * output.cols] =
 								black_neighbours >= 2 && black_neighbours <= 6 &&
 								white_black_transitions == 1 &&
@@ -527,8 +530,8 @@ namespace pi {
 					}
 				}
 
-				for (int y = 0; y < output.rows - 1; y++) {
-					for (int x = 0; x < output.cols - 1; x++) {
+				for (int y = BASE_VALUE; y < output.rows - 1; y++) {
+					for (int x = BASE_VALUE; x < output.cols - 1; x++) {
 						if (markers[x + (uint64_t)y * output.cols]) {
 							output.at<uint8_t>(y, x) = 255;
 							repeat = true;
@@ -548,8 +551,8 @@ namespace pi {
 		int cell_width = (int) ceil((double)image.cols / dimension);
 		int cell_height = (int) ceil((double)image.rows / dimension);
 
-		for (int y = 0; y < image.rows; y++) {
-			for (int x = 0; x < image.cols; x++) {
+		for (int y = BASE_VALUE; y < image.rows; y++) {
+			for (int x = BASE_VALUE; x < image.cols; x++) {
 				auto value = image.at<uint8_t>(y, x);
 				double& ref = regions.at<double>(y / cell_height, x / cell_width);
 
@@ -559,8 +562,8 @@ namespace pi {
 			}
 		}
 
-		for (int y = 0; y < dimension; y++) {
-			for (int x = 0; x < dimension; x++) {
+		for (int y = BASE_VALUE; y < dimension; y++) {
+			for (int x = BASE_VALUE; x < dimension; x++) {
 				regions.at<double>(y, x) /= (double)cell_width * cell_height;
 			}
 		}
@@ -613,7 +616,7 @@ namespace pi {
 			smpl_advance_y = 1.0f;
 		}
 
-		int count = 0;
+		int count = BASE_VALUE;
 
 		while (ref_y < ref_height && smpl_y < smpl_height) {
 			double a, b;
@@ -658,13 +661,13 @@ namespace pi {
 
 		double distance = 0.0;
 
-		uint64_t size = ref.size().width * ref.size().height;
+		uint64_t size = (uint64_t)ref.size().width * ref.size().height;
 
 
 		double* data_ref = ref.ptr<double>();
 		double* data_smpl = smpl.ptr<double>();
 
-		for (int i = 0; i < size; i++) {
+		for (int i = BASE_VALUE; i < size; i++) {
 			double value = abs(*data_ref - *data_smpl);
 
 			distance += value * value;
